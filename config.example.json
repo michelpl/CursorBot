@@ -1,0 +1,29 @@
+{
+  "telegram": {
+    "botToken": "REPLACE_OR_SET_TELEGRAM_BOT_TOKEN_ENV",
+    "allowedUserIds": [123456789],
+    "parseMode": "HTML"
+  },
+  "cursor": {
+    "apiKey": "REPLACE_OR_SET_CURSOR_API_KEY_ENV",
+    "defaultModel": { "id": "default", "params": [] },
+    "settingSources": ["project", "user"],
+    "sandboxOptions": { "enabled": true }
+  },
+  "workspaces": { "autoRegisterCwd": true, "allowedRoots": [] },
+  "paths": { "dataDir": "./data" },
+  "logging": { "level": "info" },
+  "reminders": { "timezone": "Asia/Shanghai", "maxAheadDays": 30 },
+  "attachments": { "maxFileSizeBytes": 20971520, "maxAttachmentsPerFlush": 10, "maxRetries": 3 },
+  "images": {
+    "maxImagesPerPrompt": 8,
+    "defaultPromptSingle": "请分析这张图片",
+    "defaultPromptMulti": "请分析这些图片",
+    "mediaGroupDebounceMs": 800
+  },
+  "rateLimit": {
+    "message": { "capacity": 4, "refillPerSec": 2 },
+    "agentCreate": { "capacity": 10, "refillPerSec": 0.1667 },
+    "reminders": { "maxPerUser": 100 }
+  }
+}
