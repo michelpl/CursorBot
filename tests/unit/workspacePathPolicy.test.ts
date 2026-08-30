@@ -12,7 +12,7 @@ afterEach(async () => {
 });
 
 describe("workspace path policy", () => {
-  it("允许 allowed root 内的路径", async () => {
+  it("text allowed root text", async () => {
     dir = await mkdtemp(join(tmpdir(), "ws-policy-"));
     const root = join(dir, "repo");
     const child = join(root, "child");
@@ -20,7 +20,7 @@ describe("workspace path policy", () => {
     expect(await isPathWithinAllowedRoots(child, [root])).toBe(true);
   });
 
-  it("拒绝 sibling 绕过：/repo_evil 不属于 /repo", async () => {
+  it("text sibling text/repo_evil text /repo", async () => {
     dir = await mkdtemp(join(tmpdir(), "ws-policy-"));
     const root = join(dir, "repo");
     const evil = join(dir, "repo_evil");
@@ -29,7 +29,7 @@ describe("workspace path policy", () => {
     expect(await isPathWithinAllowedRoots(evil, [root])).toBe(false);
   });
 
-  it("通过 realpath 解析 symlink，拒绝指向 root 外部的链接", async () => {
+  it("text realpath text symlinktext root text", async () => {
     dir = await mkdtemp(join(tmpdir(), "ws-policy-"));
     const root = join(dir, "repo");
     const outside = join(dir, "outside");

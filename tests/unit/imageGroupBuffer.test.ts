@@ -9,14 +9,14 @@ describe("ImageGroupBuffer", () => {
     vi.useRealTimers();
   });
 
-  it("无 groupId 单条立即触发", () => {
+  it("text groupId text", () => {
     const fired: string[][] = [];
     const buf = new ImageGroupBuffer<string>(200, (xs) => fired.push(xs));
     buf.push(undefined, "a");
     expect(fired).toEqual([["a"]]);
   });
 
-  it("同 groupId 多条在 debounce 内只触发一次（按入队序）", () => {
+  it("text groupId text debounce text", () => {
     const fired: string[][] = [];
     const buf = new ImageGroupBuffer<string>(200, (xs) => fired.push(xs));
     buf.push("g1", "a");
@@ -31,7 +31,7 @@ describe("ImageGroupBuffer", () => {
     expect(fired).toEqual([["a", "b", "c"]]);
   });
 
-  it("不同 groupId 互不干扰", () => {
+  it("text groupId text", () => {
     const fired: string[][] = [];
     const buf = new ImageGroupBuffer<string>(200, (xs) => fired.push(xs));
     buf.push("g1", "a");
@@ -42,7 +42,7 @@ describe("ImageGroupBuffer", () => {
     expect(fired).toContainEqual(["x"]);
   });
 
-  it("dispose 清掉所有定时器，再来不会触发", () => {
+  it("dispose text", () => {
     const fired: string[][] = [];
     const buf = new ImageGroupBuffer<string>(200, (xs) => fired.push(xs));
     buf.push("g1", "a");

@@ -1,5 +1,5 @@
-// 一次性工具：列出 Cursor 当前 API key 可用的全部模型 + 每个模型可选的 parameters（如 thinking effort）。
-// 用法: CURSOR_API_KEY=... npx tsx tests/manual/list_models.ts
+// text Cursor text API key text + text parameterstext thinking efforttext
+// text: CURSOR_API_KEY=... npx tsx tests/manual/list_models.ts
 import { Cursor } from "@cursor/sdk";
 
 async function main(): Promise<void> {
@@ -10,7 +10,7 @@ async function main(): Promise<void> {
   }
   const list = await Cursor.models.list({ apiKey });
   for (const m of list) {
-    console.log("———");
+    console.log("text");
     console.log(`id: ${m.id}`);
     console.log(`display: ${m.displayName}`);
     if (m.description) console.log(`desc: ${m.description}`);

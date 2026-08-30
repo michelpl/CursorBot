@@ -30,13 +30,13 @@ describe("ReminderStore", () => {
     text: "x",
   });
 
-  it("空文件 init → 空数组", async () => {
+  it("text init text text", async () => {
     const s = new ReminderStore(path);
     await s.init();
     expect(s.list()).toEqual([]);
   });
 
-  it("add + persist 后再 read 回来", async () => {
+  it("add + persist text read text", async () => {
     const s1 = new ReminderStore(path);
     await s1.init();
     await s1.add(sample("r-1", 1000));
@@ -45,7 +45,7 @@ describe("ReminderStore", () => {
     expect(s2.list().map((r) => r.id)).toEqual(["r-1"]);
   });
 
-  it("remove 删除指定 id", async () => {
+  it("remove text id", async () => {
     const s = new ReminderStore(path);
     await s.init();
     await s.add(sample("r-1", 1));
@@ -54,7 +54,7 @@ describe("ReminderStore", () => {
     expect(s.list().map((r) => r.id)).toEqual(["r-2"]);
   });
 
-  it("update 修改 at 字段", async () => {
+  it("update text at text", async () => {
     const s = new ReminderStore(path);
     await s.init();
     await s.add(sample("r-1", 1));

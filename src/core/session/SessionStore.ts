@@ -1,7 +1,7 @@
 import { JsonStore } from "../persist/jsonStore.js";
 import { z } from "zod";
 
-// 单个工作区的会话信息：用 agentId 在重启后通过 Agent.resume() 续上原对话
+// text agentId text Agent.resume() text
 export interface SessionEntry {
   agentId?: string;
   model?: string;
@@ -25,10 +25,10 @@ const SessionFileSchema = z.object({
 });
 
 /**
- * 会话存储：每个 workspace name 对应一份 SessionEntry。
+ * text workspace name text SessionEntrytext
  *
- * - 每次 set / clear 都立刻 flush，避免崩溃后丢上下文
- * - JsonStore 内部串行化写入，多次 set 不会乱序
+ * - text set / clear text flushtext
+ * - JsonStore text set text
  */
 export class SessionStore {
   private readonly store: JsonStore<SessionFile>;

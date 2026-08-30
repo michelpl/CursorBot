@@ -13,20 +13,20 @@ import { handleStatus } from "./handlers/status.js";
 import { handleModel } from "./handlers/model.js";
 import { handleRemind } from "./handlers/remind.js";
 
-// 派发器持有的所有能力句柄；handlers 不直接 new 这些对象，便于测试注入
+// texthandlers text new text
 export interface CommandContext {
   chatId: string;
-  // M2：/remind 需要知道 userId（写到 reminder.createdBy）；M1 既有命令不消费它
+  // M2text/remind text userIdtext reminder.createdBytextM1 text
   userId?: number;
   messenger: IMessenger;
   registry: WorkspaceRegistry;
   session: SessionStore;
   orchestrator: AgentOrchestrator;
-  // M2：reminder 相关依赖；不注入则 /remind 命令回错误提示
+  // M2textreminder text /remind text
   scheduler?: ReminderScheduler;
   reminderQuota?: ReminderQuota;
   reminderConfig?: { tz: string; maxAheadDays: number };
-  // F-07：/ws add 仅允许这些根目录内的路径；undefined/[] 表示 handler 侧不额外限制
+  // F-07text/ws add textundefined/[] text handler text
   workspaceAllowedRoots?: string[];
 }
 
@@ -52,7 +52,7 @@ export async function dispatchCommand(
       if (!ctx.scheduler || !ctx.reminderQuota || !ctx.reminderConfig) {
         await ctx.messenger.sendText(
           ctx.chatId,
-          "/remind 暂未启用（reminder scheduler 未注入）",
+          "/remind textreminder scheduler text",
         );
         return;
       }
@@ -70,7 +70,7 @@ export async function dispatchCommand(
     default:
       await ctx.messenger.sendText(
         ctx.chatId,
-        `未知命令：/${cmd.name}。/help 查看可用命令。`,
+        `text/${cmd.name}text/help text`,
       );
   }
 }

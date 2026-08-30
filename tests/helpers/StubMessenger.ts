@@ -9,7 +9,7 @@ import type {
   SendOptions,
 } from "../../src/core/messenger/types.js";
 
-// StubMessenger 把所有调用记录到 calls 数组（M1 风格），方便单测断言。
+// StubMessenger text calls textM1 text
 type Call =
   | { kind: "sendText"; chatId: string; text: string; opts?: SendOptions }
   | {
@@ -36,15 +36,15 @@ type Call =
   | { kind: "sendTyping"; chatId: string };
 
 export class StubMessenger implements IMessenger {
-  // M1：所有调用按时序记录到 calls
+  // M1text calls
   public calls: Call[] = [];
 
-  // M2：按调用类型分桶记录，便于针对性断言
+  // M2text
   public sentTexts: Array<{ chatId: string; text: string; opts?: SendOptions }> = [];
   public sentImages: Array<{ chatId: string; image: ImagePayload; caption?: string }> = [];
   public sentDocuments: Array<{ chatId: string; file: FilePayload; caption?: string }> = [];
 
-  // M2：可注入的 hook，用于测试出错路径（例如重试 / 超过 maxRetries）
+  // M2text hooktext / text maxRetriestext
   public sendImageImpl?: (
     chatId: string,
     image: ImagePayload,
@@ -84,7 +84,7 @@ export class StubMessenger implements IMessenger {
     }
   }
 
-  // 测试时手动触发 incoming
+  // text incoming
   emitText(m: IncomingTextMessage): void {
     for (const l of this.textListeners) l(m);
   }
@@ -119,7 +119,7 @@ export class StubMessenger implements IMessenger {
     image: ImagePayload,
     caption?: string,
   ): Promise<MessageHandle> {
-    // hook 优先：测试可注入失败实现验证重试 / 失败路径
+    // hook text / text
     if (this.sendImageImpl) await this.sendImageImpl(chatId, image, caption);
     this.calls.push({
       kind: "sendImage",

@@ -1,8 +1,8 @@
 import pino from "pino";
 import { sanitizeForOutput } from "./util/sanitize.js";
 
-// 已知的敏感字段名集合：用于 redactSensitive 在结构化对象上手动 mask；
-// 同时 pino 的 redact 配置在序列化输出时再做一次保护。
+// text redactSensitive text masktext
+// text pino text redact text
 const SENSITIVE_KEYS = new Set([
   "botToken",
   "apiKey",
@@ -12,10 +12,10 @@ const SENSITIVE_KEYS = new Set([
   "secret",
 ]);
 
-// F-01 深度防御：递归走完整对象，对每个 string 字段值跑 sanitizeForOutput，
-// 切除 Telegram bot token URL / Cursor API key 等"字符串内含机密"形态。
-// pino 的 redact 配置只能对**字段路径**生效，无法对**字符串内容**做内容级脱敏，
-// 这一层补足。
+// F-01 text string text sanitizeForOutputtext
+// text Telegram bot token URL / Cursor API key text"text"text
+// pino text redact text**text**text**text**text
+// text
 function sanitizeObjectStrings(obj: unknown): unknown {
   if (typeof obj === "string") return sanitizeForOutput(obj);
   if (Array.isArray(obj)) return obj.map(sanitizeObjectStrings);
@@ -30,8 +30,8 @@ function sanitizeObjectStrings(obj: unknown): unknown {
 }
 
 /**
- * 把对象中的敏感字段值替换为 "***"。
- * 用于在调试输出时主动脱敏（例如 dump 配置）。
+ * text "***"text
+ * text dump text
  */
 export function redactSensitive<T>(value: T): T {
   if (Array.isArray(value)) {
@@ -47,12 +47,12 @@ export function redactSensitive<T>(value: T): T {
   return value;
 }
 
-// 全局 logger 实例。生产模式输出 ndjson，开发模式 pretty。
+// text logger text ndjsontext prettytext
 //
-// 三层保护：
-//   Layer A：redact.paths（字段路径级精确 mask，如 *.apiKey / *.botToken）
-//   Layer B：formatters.log → sanitizeObjectStrings（字符串内容级脱敏，覆盖 token URL）
-//   Layer C：上层调用方 redactSensitive() 主动脱敏（dump 配置等显式场景）
+// text
+//   Layer Atextredact.pathstext masktext *.apiKey / *.botTokentext
+//   Layer Btextformatters.log text sanitizeObjectStringstext token URLtext
+//   Layer Ctext redactSensitive() textdump text
 export const logger = pino({
   level: process.env.LOG_LEVEL ?? "info",
   redact: {
@@ -66,8 +66,8 @@ export const logger = pino({
     censor: "***",
   },
   formatters: {
-    // pino 在序列化前调一次 log formatter；返回的对象会替换原对象后再写入 transport。
-    // 在这里递归跑 sanitizeObjectStrings 实现内容级脱敏。
+    // pino text log formattertext transporttext
+    // text sanitizeObjectStrings text
     log: (obj) => sanitizeObjectStrings(obj) as Record<string, unknown>,
   },
   transport:

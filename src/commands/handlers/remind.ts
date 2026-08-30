@@ -23,22 +23,22 @@ export interface RemindContext {
   reminderQuota: ReminderQuota;
 }
 
-const USAGE = `用法：
-/remind add text   <时间> <内容>
-/remind add prompt <时间> <prompt>
+const USAGE = `text
+/remind add text   <text> <text>
+/remind add prompt <text> <prompt>
 /remind list
 /remind del <id>
 
-时间格式：相对 (10m, 1h30m) | 当日 HH:MM | YYYY-MM-DDTHH:MM`;
+text (10m, 1h30m) | text HH:MM | YYYY-MM-DDTHH:MM`;
 
 /**
- * /remind 子命令派发：
- * - add：解析 kind / 时间表达式 / body，调 scheduler.add
- * - list：取 scheduler.list() 排序输出
- * - del：scheduler.remove(id)
+ * /remind text
+ * - addtext kind / text / bodytext scheduler.add
+ * - listtext scheduler.list() text
+ * - deltextscheduler.remove(id)
  *
- * 注意：时间表达式只能是单个 token（不能含空格），所以 `2026-05-06 09:00` 形式
- * 走不通；用 `2026-05-06T09:00` 替代（用 T 分隔）。
+ * text tokentext `2026-05-06 09:00` text
+ * text `2026-05-06T09:00` text T text
  */
 export async function handleRemind(
   args: string[],
@@ -46,15 +46,15 @@ export async function handleRemind(
   ctx: RemindContext,
 ): Promise<void> {
   const sub = args[0];
-  // dispatch 传来的 rest 是去除命令名后的整段（如 "add text 1h 测试"），
-  // 这里把 sub 关键字也剥掉，让 handleAdd 看到的 fullRest 形如 "text 1h 测试"，
-  // 与 args.slice(1) 对齐，避免 stripLeading 把 sub 当成 body。
+  // dispatch text rest text "add text 1h text"text
+  // text sub text handleAdd text fullRest text "text 1h text"text
+  // text args.slice(1) text stripLeading text sub text bodytext
   const restAfterSub = sub ? stripFirstToken(rest, sub) : rest;
   if (sub === "add") return handleAdd(args.slice(1), restAfterSub, ctx);
   if (sub === "list") return handleList(ctx);
   if (sub === "del") return handleDel(args.slice(1), ctx);
-  // 所有"用法/帮助"类提示走 plain parseMode：USAGE 里有 <时间> 等占位符，
-  // 默认 HTML parseMode 会把它当未知标签解析，Telegram 直接 400。
+  // text"text/text"text plain parseModetextUSAGE text <text> text
+  // text HTML parseMode textTelegram text 400text
   await ctx.messenger.sendText(ctx.chatId, USAGE, { parseMode: "plain" });
 }
 
@@ -73,10 +73,10 @@ async function handleAdd(
     await ctx.messenger.sendText(ctx.chatId, USAGE, { parseMode: "plain" });
     return;
   }
-  // body 文本：去掉前两个 token（text|prompt + 时间表达式），其余原样保留空格
+  // body text tokentexttext|prompt + text
   const body = stripLeading(fullRest, kind, expr);
   if (!body) {
-    await ctx.messenger.sendText(ctx.chatId, "内容不能为空。\n" + USAGE, {
+    await ctx.messenger.sendText(ctx.chatId, "text\n" + USAGE, {
       parseMode: "plain",
     });
     return;
@@ -90,7 +90,7 @@ async function handleAdd(
   if (parsed.error || !parsed.at) {
     await ctx.messenger.sendText(
       ctx.chatId,
-      `⚠️ 时间格式 ${parsed.error ?? "不识别"}：${expr}`,
+      `text text ${parsed.error ?? "text"}text${expr}`,
     );
     return;
   }
@@ -113,7 +113,7 @@ async function handleAdd(
     if (!ws) {
       await ctx.messenger.sendText(
         ctx.chatId,
-        "没有活跃 workspace，先 /ws use 一个再 /remind add prompt。",
+        "text workspacetext /ws use text /remind add prompttext",
       );
       return;
     }
@@ -139,7 +139,7 @@ async function handleAdd(
       );
       await ctx.messenger.sendText(
         ctx.chatId,
-        `Reminder 已达上限（${e.used}/${e.cap}），请先 /remind del 释放再添加。`,
+        `Reminder text${e.used}/${e.cap}text /remind del text`,
         { parseMode: "plain" },
       );
       return;
@@ -148,14 +148,14 @@ async function handleAdd(
   }
   await ctx.messenger.sendText(
     ctx.chatId,
-    `✅ ${id}：将于 ${new Date(parsed.at).toISOString()} 触发`,
+    `text ${id}text ${new Date(parsed.at).toISOString()} text`,
   );
 }
 
 async function handleList(ctx: RemindContext): Promise<void> {
   const items = ctx.scheduler.list();
   if (items.length === 0) {
-    await ctx.messenger.sendText(ctx.chatId, "无 reminder。");
+    await ctx.messenger.sendText(ctx.chatId, "text remindertext");
     return;
   }
   const lines = items
@@ -174,7 +174,7 @@ async function handleList(ctx: RemindContext): Promise<void> {
 async function handleDel(rest: string[], ctx: RemindContext): Promise<void> {
   const id = rest[0];
   if (!id) {
-    await ctx.messenger.sendText(ctx.chatId, "用法：/remind del <id>", {
+    await ctx.messenger.sendText(ctx.chatId, "text/remind del <id>", {
       parseMode: "plain",
     });
     return;
@@ -182,11 +182,11 @@ async function handleDel(rest: string[], ctx: RemindContext): Promise<void> {
   await ctx.scheduler.remove(id);
   await ctx.messenger.sendText(
     ctx.chatId,
-    `已删除 ${escapeHtml(id)}（若存在）。`,
+    `text ${escapeHtml(id)}text`,
   );
 }
 
-// 把 fullRest 里前导的 kind / expr 两个 token 剥掉，保留之后原始空格
+// text fullRest text kind / expr text token text
 function stripLeading(rest: string, kind: string, expr: string): string {
   let s = rest.trimStart();
   if (s.startsWith(kind)) s = s.slice(kind.length).trimStart();
@@ -194,7 +194,7 @@ function stripLeading(rest: string, kind: string, expr: string): string {
   return s;
 }
 
-// 把 rest 最前面的 token 剥掉。比 stripLeading 更通用，仅供 handleRemind 顶层剥 sub。
+// text rest text token text stripLeading text handleRemind text subtext
 function stripFirstToken(rest: string, token: string): string {
   const s = rest.trimStart();
   if (s.startsWith(token)) return s.slice(token.length).trimStart();

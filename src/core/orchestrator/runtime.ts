@@ -1,6 +1,6 @@
-// 把 @cursor/sdk 的能力抽象成中立的运行时接口，方便：
-// 1) 用 StubRuntime 在单测中跑 orchestrator 端到端流程；
-// 2) 后续切换到云端 / 自托管 SDK 时只换实现，不改 orchestrator。
+// text @cursor/sdk text
+// 1) text StubRuntime text orchestrator text
+// 2) text / text SDK text orchestratortext
 
 export interface IAgentRuntime {
   create(opts: CreateAgentOptions): Promise<RuntimeAgent>;
@@ -13,8 +13,8 @@ export interface CreateAgentOptions {
   model?: { id: string; params?: Array<{ id: string; value: string }> };
   settingSources?: ("project" | "user" | "team" | "mdm" | "plugins" | "all")[];
   mcpServers?: Record<string, unknown>;
-  // F-10：透传到 SDK 的 local.sandboxOptions。enabled=true 启用 Cursor SDK 自带沙箱，
-  // 沙箱具体规则由 ~/.cursor/sandbox.json 或 <workspace>/.cursor/sandbox.json 配置。
+  // F-10text SDK text local.sandboxOptionstextenabled=true text Cursor SDK text
+  // text ~/.cursor/sandbox.json text <workspace>/.cursor/sandbox.json text
   sandboxOptions?: { enabled: boolean };
 }
 
@@ -22,14 +22,14 @@ export interface ResumeAgentOptions {
   cwd: string;
   model?: { id: string; params?: Array<{ id: string; value: string }> };
   settingSources?: ("project" | "user" | "team" | "mdm" | "plugins" | "all")[];
-  // F-10：与 CreateAgentOptions.sandboxOptions 对应；resume 路径同样必须传，
-  // 否则历史 session 重连后会重新跑成无沙箱状态，等于完全绕过加固。
+  // F-10text CreateAgentOptions.sandboxOptions textresume text
+  // text session text
   sandboxOptions?: { enabled: boolean };
 }
 
 export interface RuntimeAgent {
   agentId: string;
-  // M2：可选 images 直接透传给 SDK 的 send（用于"图片+文字"类多模态 prompt）
+  // M2text images text SDK text sendtext"text+text"text prompttext
   send(
     text: string,
     opts?: {
@@ -51,7 +51,7 @@ export interface RuntimeRun {
   cancel(): Promise<void>;
 }
 
-// 中立的流事件：去掉 SDK 内部那些不稳定的字段，只保留 orchestrator 真正用到的
+// text SDK text orchestrator text
 export type RuntimeStreamEvent =
   | { type: "assistant"; text: string }
   | { type: "thinking"; text: string }

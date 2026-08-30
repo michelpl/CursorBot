@@ -1,13 +1,13 @@
-// 工具状态行字数限制：太长在 Telegram 上会被挤掉正文
+// text Telegram text
 const MAX_LEN = 60;
 
 function trim(s: string): string {
   if (s.length <= MAX_LEN) return s;
-  return s.slice(0, MAX_LEN) + "…";
+  return s.slice(0, MAX_LEN) + "text";
 }
 
 function pickPath(a: Record<string, unknown> | undefined): string {
-  // SDK 各工具传 path 用的字段不一致，做兜底
+  // SDK text path text
   return (
     (a?.path as string | undefined) ??
     (a?.relative_path as string | undefined) ??
@@ -16,10 +16,10 @@ function pickPath(a: Record<string, unknown> | undefined): string {
 }
 
 /**
- * 把 SDK 的工具调用 args 概括成一行展示文本。
+ * text SDK text args text
  *
- * SDK 文档明确说"args / result schema 不稳定，视为 unknown 防御式解析"，
- * 因此所有访问都走可选链 + as cast，并在字段缺失时给空字符串兜底，绝不抛异常。
+ * SDK text"args / result schema text unknown text"text
+ * text + as casttext
  */
 export function summarizeTool(name: string, args: unknown): string {
   const a = (args && typeof args === "object" ? args : undefined) as

@@ -1,12 +1,12 @@
-// 一次性工具：启动 bot 等你私聊的第一条消息，把 from.id (你的 userId) 打印出来。
-// 用法: TELEGRAM_BOT_TOKEN=... npx tsx tests/manual/whoami.ts
+// text bot text from.id (text userId) text
+// text: TELEGRAM_BOT_TOKEN=... npx tsx tests/manual/whoami.ts
 //
-// 操作：
-//   1. 跑这个脚本
-//   2. 在 Telegram 里和 @<你的 bot> 私聊任意一条消息（比如 "hi"）
-//   3. 终端里会打印 "你的 userId: <数字>"，并自动退出
+// text
+//   1. text
+//   2. text Telegram text @<text bot> text "hi"text
+//   3. text "text userId: <text>"text
 //
-// 拿到 userId 后填到 config.json 的 telegram.allowedUserIds: [<数字>] 里。
+// text userId text config.json text telegram.allowedUserIds: [<text>] text
 import { Bot } from "grammy";
 
 async function main(): Promise<void> {
@@ -16,20 +16,20 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const bot = new Bot(token);
-  console.log("等你私聊 bot 任意一条消息...");
+  console.log("text bot text...");
   let done = false;
   bot.on("message", (ctx) => {
     if (done) return;
     done = true;
     const u = ctx.from;
     const c = ctx.chat;
-    console.log("\n———");
-    console.log("你的 userId:", u?.id);
-    console.log("用户名:", u?.username ?? "(未设)");
-    console.log("姓名:", `${u?.first_name ?? ""} ${u?.last_name ?? ""}`.trim());
-    console.log("chatId（私聊时与 userId 相同）:", c.id);
-    console.log("———");
-    console.log(`复制下面这行到 config.json 的 telegram.allowedUserIds：`);
+    console.log("\ntext");
+    console.log("text userId:", u?.id);
+    console.log("text:", u?.username ?? "(text)");
+    console.log("text:", `${u?.first_name ?? ""} ${u?.last_name ?? ""}`.trim());
+    console.log("chatIdtext userId text:", c.id);
+    console.log("text");
+    console.log(`text config.json text telegram.allowedUserIdstext`);
     console.log(`[${u?.id}]`);
     void bot.stop().then(() => process.exit(0));
   });

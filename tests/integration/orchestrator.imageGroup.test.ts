@@ -10,7 +10,7 @@ import { AttachmentDispatcher } from "../../src/core/attachments/AttachmentDispa
 import { StubMessenger } from "../helpers/StubMessenger.js";
 import { StubAgentRuntime } from "../helpers/StubAgent.js";
 
-// 与异步竞争的辅助：等异步副作用就绪
+// text
 async function waitFor<T>(fn: () => T | undefined, retries = 200): Promise<T> {
   for (let i = 0; i < retries; i++) {
     const v = fn();
@@ -51,33 +51,33 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
     await rm(dataDir, { recursive: true, force: true });
   });
 
-  it("把 images 透传给 agent.send（单图）", async () => {
-    // 与 M1 集成测试一致的流程：先发起 run，再等 stub 出现注入剧本
+  it("text images text agent.sendtext", async () => {
+    // text M1 text runtext stub text
     const p = orch.runPromptWithImages({
       chatId: "1",
-      text: "这是什么？",
+      text: "text",
       images: [{ data: "AAA=", mimeType: "image/jpeg" }],
       force: false,
       userId: 0,
     });
     const agent = await waitFor(() => runtime.agents[0]);
     const run = await waitFor(() => agent.currentRun);
-    run.setScript([{ type: "assistant", text: "看到了" }]);
+    run.setScript([{ type: "assistant", text: "text" }]);
     await p;
 
-    // 透传校验：text + images
+    // texttext + images
     expect(agent.lastSend?.text).toContain("<user_request>");
-    expect(agent.lastSend?.text).toContain("这是什么？");
+    expect(agent.lastSend?.text).toContain("text");
     expect(agent.lastSend?.images).toEqual([
       { data: "AAA=", mimeType: "image/jpeg" },
     ]);
     expect(agent.lastSend?.force).toBe(false);
   });
 
-  it("多张图透传 + 默认 force=false", async () => {
+  it("text + text force=false", async () => {
     const p = orch.runPromptWithImages({
       chatId: "1",
-      text: "看",
+      text: "text",
       images: [
         { data: "A", mimeType: "image/png" },
         { data: "B", mimeType: "image/png" },
@@ -95,7 +95,7 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
     expect(agent.lastSend?.force).toBe(false);
   });
 
-  it("run 结束后 dispatcher 把队列条目发出去", async () => {
+  it("run text dispatcher text", async () => {
     const queuePath = join(dataDir, "queue.jsonl");
     const pendingDir = join(dataDir, "pending");
     await mkdir(pendingDir, { recursive: true });
@@ -136,38 +136,38 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
   });
 
   describe("runReminder", () => {
-    it("kind=text 直接 sendText", async () => {
+    it("kind=text text sendText", async () => {
       const r = await orch.runReminder({
         chatId: "1",
         kind: "text",
-        text: "起床啦",
+        text: "text",
         userId: 0,
       });
       expect(r.delivered).toBe(true);
       expect(
-        messenger.sentTexts.some((t) => t.text.includes("起床啦")),
+        messenger.sentTexts.some((t) => t.text.includes("text")),
       ).toBe(true);
     });
 
-    it("kind=prompt 走 send", async () => {
+    it("kind=prompt text send", async () => {
       const p = orch.runReminder({
         chatId: "1",
         kind: "prompt",
-        prompt: "查 BTC 价格",
+        prompt: "text BTC text",
         userId: 0,
       });
       const agent = await waitFor(() => runtime.agents[0]);
       const run = await waitFor(() => agent.currentRun);
-      run.setScript([{ type: "assistant", text: "查到了" }]);
+      run.setScript([{ type: "assistant", text: "text" }]);
       const r = await p;
       expect(r.delivered).toBe(true);
       expect(agent.lastSend?.text).toContain("<user_request>");
-      expect(agent.lastSend?.text).toContain("查 BTC 价格");
+      expect(agent.lastSend?.text).toContain("text BTC text");
     });
   });
 
-  it("无活跃 workspace 时回提示且不调 send", async () => {
-    // 用一个空 registry 的 orchestrator 单独跑此用例
+  it("text workspace text send", async () => {
+    // text registry text orchestrator text
     const empty = new WorkspaceRegistry(join(dataDir, "empty.json"));
     await empty.init({ autoRegisterCwd: false, cwd: dataDir });
     const messenger2 = new StubMessenger();
@@ -182,14 +182,14 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
     });
     await orch2.runPromptWithImages({
       chatId: "1",
-      text: "看",
+      text: "text",
       images: [{ data: "A", mimeType: "image/jpeg" }],
       force: false,
       userId: 0,
     });
     expect(runtime2.agents.length).toBe(0);
     expect(
-      messenger2.sentTexts.some((m) => m.text.includes("没有活跃")),
+      messenger2.sentTexts.some((m) => m.text.includes("text")),
     ).toBe(true);
     await orch2.dispose();
   });

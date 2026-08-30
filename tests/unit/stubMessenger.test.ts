@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { StubMessenger } from "../helpers/StubMessenger.js";
 
 describe("StubMessenger", () => {
-  it("sendText 累积调用，返回递增 messageId", async () => {
+  it("sendText text messageId", async () => {
     const m = new StubMessenger();
     const a = await m.sendText("c1", "hi");
     const b = await m.sendText("c1", "ho");
@@ -12,7 +12,7 @@ describe("StubMessenger", () => {
     expect(m.calls[0]).toEqual({ kind: "sendText", chatId: "c1", text: "hi" });
   });
 
-  it("editText 记录调用", async () => {
+  it("editText text", async () => {
     const m = new StubMessenger();
     await m.editText("c1", "m-1", "edited");
     expect(m.calls[0]).toEqual({
@@ -23,7 +23,7 @@ describe("StubMessenger", () => {
     });
   });
 
-  it("emit text 触发监听器", async () => {
+  it("emit text text", async () => {
     const m = new StubMessenger();
     const got: string[] = [];
     m.on("text", (msg) => got.push(msg.text));

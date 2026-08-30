@@ -3,8 +3,8 @@ import { ReminderQuota } from "../../src/core/reminders/ReminderQuota.js";
 import { ReminderQuotaExceededError } from "../../src/core/reminders/errors.js";
 import type { Reminder } from "../../src/core/reminders/ReminderStore.js";
 
-// F-06 PR e：ReminderQuota 单元测试
-// quota 基于 store.list() 实时计数，checkAndAdd 只在未达上限时调用底层 add。
+// F-06 PR etextReminderQuota text
+// quota text store.list() textcheckAndAdd text addtext
 
 function makeReminder(id: string, createdBy: number): Reminder {
   return {
@@ -31,7 +31,7 @@ function makeFakeStore(initial: Reminder[] = []) {
 }
 
 describe("ReminderQuota", () => {
-  it("99 -> 100 通过；第 101 抛", async () => {
+  it("99 -> 100 text 101 text", async () => {
     const store = makeFakeStore(
       Array.from({ length: 99 }, (_, i) => makeReminder(`r${i}`, 1)),
     );
@@ -43,7 +43,7 @@ describe("ReminderQuota", () => {
     expect(store.items.length).toBe(100);
   });
 
-  it("不同 user 互相独立", async () => {
+  it("text user text", async () => {
     const items = Array.from({ length: 100 }, (_, i) =>
       makeReminder(`r${i}`, 1),
     );
@@ -56,7 +56,7 @@ describe("ReminderQuota", () => {
     expect(store.items.length).toBe(101);
   });
 
-  it("删除后能再加（quota 基于 store 实时计数）", async () => {
+  it("textquota text store text", async () => {
     const items = Array.from({ length: 100 }, (_, i) =>
       makeReminder(`r${i}`, 1),
     );

@@ -1,6 +1,6 @@
-# Contributing to cursor-claw
+# Contributing to cursorbot
 
-Thank you for considering a contribution! cursor-claw is a small, opinionated project. The contribution loop is intentionally tight; please skim this once before opening your first PR.
+Thank you for considering a contribution! cursorbot is a small, opinionated project. The contribution loop is intentionally tight; please skim this once before opening your first PR.
 
 - [Quick loop](#quick-loop)
 - [Development setup](#development-setup)
@@ -34,15 +34,15 @@ PRs that don't run all four checks (`test` / `typecheck` / `lint` / formatting) 
 See **[docs/INSTALL.md](../docs/INSTALL.md)** for the full path. TL;DR:
 
 ```bash
-git clone https://github.com/lilyjem/cursor-claw.git
-cd cursor-claw
+git clone https://github.com/michelpl/CursorBot.git
+cd cursorbot
 npm install
 cp config.example.json config.json   # not required for unit tests, but you'll want it eventually
 ```
 
 ## Test-driven workflow (mandatory)
 
-cursor-claw is developed strictly TDD. Every behavioural change starts with a failing test:
+cursorbot is developed strictly TDD. Every behavioural change starts with a failing test:
 
 1. **RED** &mdash; Write the smallest test that captures the desired behaviour. `npm test` should now show one new failure.
 2. **GREEN** &mdash; Write the smallest implementation that makes the test pass. Don't refactor yet.
@@ -104,9 +104,9 @@ Common types in this repo:
 Subject can be Chinese or English. Examples from the existing log:
 
 ```
-feat(reminders): ReminderScheduler 启停 + busy 重排（M2-C）
-fix(render): 跨 chunk markdown 整体渲染避免成对标记被切丢
-docs(plan): M2 实现计划（17 个 TDD 任务，~4 day）
+feat(reminders): ReminderScheduler text + busy textM2-Ctext
+fix(render): text chunk markdown text
+docs(plan): M2 text17 text TDD text~4 daytext
 ```
 
 ### PR checklist

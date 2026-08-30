@@ -3,9 +3,9 @@ import { AgentOrchestrator } from "../../src/core/orchestrator/AgentOrchestrator
 import { RateLimiter } from "../../src/core/rateLimit/RateLimiter.js";
 import type { OrchestratorDeps } from "../../src/core/orchestrator/AgentOrchestrator.js";
 
-// F-06 PR d：agent.create 限速集成测试
-// - cached miss 进入 create 路径才计入限速；命中 cached 不计入
-// - 超限抛 RateLimitedError，被 runInternal catch 后渲染为中文用户提示
+// F-06 PR dtextagent.create text
+// - cached miss text create text cached text
+// - text RateLimitedErrortext runInternal catch text
 
 function makeFakeRuntime() {
   const created: string[] = [];
@@ -50,15 +50,15 @@ function makeFakeSession() {
   };
 }
 
-describe("AgentOrchestrator agent.create 限速", () => {
-  it("capacity=2 时第 3 个新 cwd 触发 RateLimitedError 并被 finalize 渲染为错误", async () => {
+describe("AgentOrchestrator agent.create text", () => {
+  it("capacity=2 text 3 text cwd text RateLimitedError text finalize text", async () => {
     const runtime = makeFakeRuntime();
     const messenger = makeFakeMessenger();
     let activeWs: { name: string; path: string } = { name: "ws1", path: "/tmp/ws1" };
     const registry = { getActive: () => activeWs };
 
     const limiter = new RateLimiter({
-      // 极小正数：测试中近似不回血，同时避免 retryAfterMs 变成 Infinity。
+      // text retryAfterMs text Infinitytext
       buckets: { agentCreate: { capacity: 2, refillPerSec: 0.0001 } },
       now: () => 0,
     });
@@ -85,10 +85,10 @@ describe("AgentOrchestrator agent.create 限速", () => {
     expect(runtime.created).toEqual(["/tmp/ws1", "/tmp/ws2"]);
     expect(runtime.create).toHaveBeenCalledTimes(2);
     const last = messenger.sent[messenger.sent.length - 1]?.text ?? "";
-    expect(last).toMatch(/创建 agent 过多/);
+    expect(last).toMatch(/text agent text/);
   });
 
-  it("cached 命中不计入 agent.create 限速", async () => {
+  it("cached text agent.create text", async () => {
     const runtime = makeFakeRuntime();
     const messenger = makeFakeMessenger();
     const registry = { getActive: () => ({ name: "ws1", path: "/tmp/ws1" }) };

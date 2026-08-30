@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: [
-    "src/bin/cursor-claw.ts",
+    "src/bin/cursorbot.ts",
     "src/tools/attach-image.ts",
     "src/tools/attach-file.ts",
   ],

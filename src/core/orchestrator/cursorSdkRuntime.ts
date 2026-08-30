@@ -11,14 +11,14 @@ import type {
 import { logger } from "../../logger.js";
 
 /**
- * 把 IAgentRuntime 桥到真实 @cursor/sdk。
+ * text IAgentRuntime text @cursor/sdktext
  *
- * 关键差异处理：
- * - SDK 的 Run.stream 返回 SDKMessage union（system/user/assistant/tool_call/thinking/status/...），
- *   我们只把 orchestrator 关心的 assistant text + thinking + tool_call 转出去。
- * - SDK 的 force 参数是 SendOptions.local.force，不是顶级 force。
- * - LocalAgent 的 model 必填，fallback 用 SDK 内置的 "default"（注意：不是 "auto"，
- *   "auto" 会被 SDK 的 ConfigurationError 拒绝）。
+ * text
+ * - SDK text Run.stream text SDKMessage uniontextsystem/user/assistant/tool_call/thinking/status/...text
+ *   text orchestrator text assistant text + thinking + tool_call text
+ * - SDK text force text SendOptions.local.forcetext forcetext
+ * - LocalAgent text model textfallback text SDK text "default"text "auto"text
+ *   "auto" text SDK text ConfigurationError text
  */
 export class CursorSdkRuntime implements IAgentRuntime {
   constructor(private readonly apiKey: string) {}
@@ -35,8 +35,8 @@ export class CursorSdkRuntime implements IAgentRuntime {
       local: {
         cwd: opts.cwd,
         settingSources: opts.settingSources ?? ["project", "user"],
-        // F-10：透传 sandboxOptions 到 SDK；具体沙箱行为由 sandbox.json 控制。
-        // 仅当上层显式传值时才设置，避免覆盖 SDK 自带默认。
+        // F-10text sandboxOptions text SDKtext sandbox.json text
+        // text SDK text
         ...(opts.sandboxOptions ? { sandboxOptions: opts.sandboxOptions } : {}),
       },
       mcpServers: opts.mcpServers as
@@ -55,7 +55,7 @@ export class CursorSdkRuntime implements IAgentRuntime {
       local: {
         cwd: opts.cwd,
         settingSources: opts.settingSources ?? ["project", "user"],
-        // F-10：见 create 同一字段注释
+        // F-10text create text
         ...(opts.sandboxOptions ? { sandboxOptions: opts.sandboxOptions } : {}),
       },
     });
@@ -76,8 +76,8 @@ class SdkAgentWrapper implements RuntimeAgent {
       images?: Array<{ data: string; mimeType: string }>;
     },
   ): Promise<RuntimeRun> {
-    // M2：SDK 的 send(message, options) 中 images 属于 message（SDKUserMessage），
-    // 不属于 SendOptions。所以有 images 时把第一个参数升级为对象形式。
+    // M2textSDK text send(message, options) text images text messagetextSDKUserMessagetext
+    // text SendOptionstext images text
     const message =
       opts?.images && opts.images.length > 0
         ? { text, images: opts.images }
@@ -99,7 +99,7 @@ class SdkRunWrapper implements RuntimeRun {
 
   constructor(private readonly inner: Run) {
     this.status = inner.status;
-    // 持续同步 SDK 的 status 到 wrapper：cancel/finish 后 orchestrator 才能正确判断
+    // text SDK text status text wrappertextcancel/finish text orchestrator text
     inner.onDidChangeStatus((s) => {
       this.status = s;
     });
@@ -128,7 +128,7 @@ class SdkRunWrapper implements RuntimeRun {
           };
           break;
         case "status":
-          // SDK 报错的真正描述往往在这里：status=ERROR + message="...."
+          // SDK textstatus=ERROR + message="...."
           logger.info(
             { status: e.status, message: e.message },
             "sdk status event",

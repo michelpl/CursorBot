@@ -1,22 +1,22 @@
-# 依赖
+# text
 node_modules/
 
-# 构建产物
+# text
 dist/
 
-# 测试覆盖率
+# text
 coverage/
 
-# 运行时数据（含会话、定时任务、附件队列、聊天 ID）
+# text IDtext
 data/
 
-# 配置（含 token / API key）
+# text token / API keytext
 config.json
 .env
 .env.local
 .env.*.local
 
-# 日志
+# text
 *.log
 logs/
 
@@ -26,10 +26,10 @@ logs/
 !.vscode/extensions.json
 .idea/
 
-# 临时文件
+# text
 *.tmp
 *.swp
 *.swo
 
-# M2: cursor-claw 在 active workspace 写入的标记目录（attach CLI 用它定位 dataDir）
-.claw/
+# M2: cursorbot text active workspace textattach CLI text dataDirtext
+.cursorbot/

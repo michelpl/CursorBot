@@ -39,7 +39,7 @@ function lastSent(messenger: StubMessenger): string {
 }
 
 describe("dispatchCommand", () => {
-  it("/help → 发送帮助信息", async () => {
+  it("/help text text", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "help", args: [], rest: "" },
@@ -48,7 +48,7 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toContain("/start");
   });
 
-  it("/ws list 显示当前为 default", async () => {
+  it("/ws list text default", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "ws", args: ["list"], rest: "list" },
@@ -57,7 +57,7 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toContain("default");
   });
 
-  it("/ws add name path → 注册成功", async () => {
+  it("/ws add name path text text", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       {
@@ -71,7 +71,7 @@ describe("dispatchCommand", () => {
     expect(registry.get("alpha")?.path).toBe(dir);
   });
 
-  it("/ws use ghost → 报错（包含 not found）", async () => {
+  it("/ws use ghost text text not foundtext", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "ws", args: ["use", "ghost"], rest: "use ghost" },
@@ -80,7 +80,7 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toMatch(/not found/i);
   });
 
-  it("/reset 清空 session 中 default 的 agentId", async () => {
+  it("/reset text session text default text agentId", async () => {
     const { messenger, registry, session, orch } = await setup();
     await session.set("default", { agentId: "agent-x" });
     await dispatchCommand(
@@ -90,16 +90,16 @@ describe("dispatchCommand", () => {
     expect(session.get("default")?.agentId).toBeUndefined();
   });
 
-  it("/cancel 没有活跃 run 时也优雅返回", async () => {
+  it("/cancel text run text", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "cancel", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(lastSent(messenger)).toMatch(/取消/);
+    expect(lastSent(messenger)).toMatch(/text/);
   });
 
-  it("/status 显示当前工作区与模型", async () => {
+  it("/status text", async () => {
     const { messenger, registry, session, orch } = await setup();
     await session.set("default", { agentId: "agent-y", model: "auto" });
     await dispatchCommand(
@@ -109,7 +109,7 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toContain("default");
   });
 
-  it("/model composer-2 写回 session", async () => {
+  it("/model composer-2 text session", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "model", args: ["composer-2"], rest: "composer-2" },
@@ -118,12 +118,12 @@ describe("dispatchCommand", () => {
     expect(session.get("default")?.model).toBe("composer-2");
   });
 
-  it("未知命令 → 回提示", async () => {
+  it("text text text", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "nonexistent", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(lastSent(messenger)).toMatch(/未知命令|Unknown/);
+    expect(lastSent(messenger)).toMatch(/text|Unknown/);
   });
 });

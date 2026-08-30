@@ -1,26 +1,26 @@
-// F-06 PR a：TokenBucket 纯算法
-// - 突发上限 = capacity；稳态速率 = refillPerSec
-// - 状态只有 (tokens, lastRefillMs)；无 timer / 无副作用 / 可测试
-// - 可注入 now() 以便单测控制时间
+// F-06 PR atextTokenBucket text
+// - text = capacitytext = refillPerSec
+// - text (tokens, lastRefillMs)text timer / text / text
+// - text now() text
 
 export interface TokenBucketOptions {
-  // 桶最大 token 数（即"允许的瞬时突发量"）
+  // text token text"text"text
   capacity: number;
-  // 每秒回血速率
+  // text
   refillPerSec: number;
-  // 测试可注入 fake clock；默认 Date.now
+  // text fake clocktext Date.now
   now?: () => number;
 }
 
 /**
- * 经典 token-bucket 算法实现。
+ * text token-bucket text
  *
- * 设计取舍：
- * - 把 refill 放在 take/inspect 内部按需触发（lazy），
- *   而不是用 setInterval 主动补血——后者带 timer 副作用与多 bucket 时
- *   的 GC 开销，前者是无状态时间数学。
- * - tokens 用浮点保存（refill 不是整数 token/s 时也能精确）。
- *   take(n) 的判定仍按"是否 ≥ n"来做整数判定。
+ * text
+ * - text refill text take/inspect textlazytext
+ *   text setInterval text timer text bucket text
+ *   text GC text
+ * - tokens textrefill text token/s text
+ *   take(n) text"text text n"text
  */
 export class TokenBucket {
   private readonly capacity: number;
@@ -37,7 +37,7 @@ export class TokenBucket {
     this.lastRefillMs = this.now();
   }
 
-  // 把流逝时间内的 token 补到当前余额，并 clamp 在 capacity 上限
+  // text token text clamp text capacity text
   private refill(): void {
     const t = this.now();
     const dt = (t - this.lastRefillMs) / 1000;
@@ -49,7 +49,7 @@ export class TokenBucket {
     this.lastRefillMs = t;
   }
 
-  // 试取 n 个 token；够则扣减返回 true，否则保持原状返回 false
+  // text n text tokentext truetext false
   take(n = 1): boolean {
     this.refill();
     if (this.tokens >= n) {
@@ -59,13 +59,13 @@ export class TokenBucket {
     return false;
   }
 
-  // 当前可用 token 数（已 refill 同步过）；不消耗
+  // text token text refill text
   inspect(): number {
     this.refill();
     return this.tokens;
   }
 
-  // 还差多少 ms 才能再 take 1 个 token；当前已 ≥ 1 时返回 0
+  // text ms text take 1 text tokentext text 1 text 0
   timeUntilNext(): number {
     this.refill();
     if (this.tokens >= 1) return 0;

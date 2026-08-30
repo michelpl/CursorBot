@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
-// @ts-expect-error 测试直接覆盖 Node CLI 的 .mjs 脚本；生产运行由 node 执行。
+// @ts-expect-error text Node CLI text .mjs text node text
 import { evaluateAudit } from "../../scripts/audit-security.mjs";
 
-// F-04 PR #12：CI audit gate 的核心逻辑
-// 当前 F-02 undici chain 是 Accepted-Risk，必须允许；新增未登记风险必须拒绝。
+// F-04 PR #12textCI audit gate text
+// text F-02 undici chain text Accepted-Risktext
 
 describe("audit-security allowlist", () => {
-  it("允许当前 F-02 undici accepted-risk chain", () => {
+  it("text F-02 undici accepted-risk chain", () => {
     const r = evaluateAudit({
       vulnerabilities: {
         undici: {
@@ -27,7 +27,7 @@ describe("audit-security allowlist", () => {
     expect(r.failures).toEqual([]);
   });
 
-  it("拒绝新增未登记 high vulnerability", () => {
+  it("text high vulnerability", () => {
     const r = evaluateAudit({
       vulnerabilities: {
         evil: {
@@ -40,7 +40,7 @@ describe("audit-security allowlist", () => {
     expect(r.failures[0]).toContain("evil");
   });
 
-  it("拒绝 allowlisted package 上的新 advisory source", () => {
+  it("text allowlisted package text advisory source", () => {
     const r = evaluateAudit({
       vulnerabilities: {
         undici: {

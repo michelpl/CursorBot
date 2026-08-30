@@ -1,4 +1,4 @@
-<h1 align="center">cursor-claw</h1>
+<h1 align="center">cursorbot</h1>
 
 <p align="center">
   <b>Telegram &harr; Cursor SDK bridge</b><br/>
@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <b>English</b> &nbsp;·&nbsp;
-  <a href="./README.zh-CN.md">简体中文</a>
+  <b>English</b> &nbsp;text&nbsp;
+  <a href="./README.zh-CN.md">text</a>
 </p>
 
 <p align="center">
@@ -24,26 +24,26 @@
 
 ---
 
-## Why cursor-claw
+## Why cursorbot
 
 Cursor's agent capability is amazing &mdash; but it lives **inside the IDE on your desk**. The moment you walk away, you also walk away from your agent.
 
-`cursor-claw` is a tiny single-process service that runs on your dev machine and exposes Cursor agents through messengers you already carry: today **Telegram**, with **WeChat** and other channels in the roadmap. You text your bot, the bot drives Cursor agents on your local repos, the bot streams answers back. Everything runs on **your** hardware with **your** API keys &mdash; no third-party middleman.
+`cursorbot` is a tiny single-process service that runs on your dev machine and exposes Cursor agents through messengers you already carry: today **Telegram**, with **WeChat** and other channels in the roadmap. You text your bot, the bot drives Cursor agents on your local repos, the bot streams answers back. Everything runs on **your** hardware with **your** API keys &mdash; no third-party middleman.
 
 > Walking the dog &mdash; tap **`/ws use myproj`** &rarr; **`fix the failing test on main`**. Two minutes later your home dev box has a clean test run waiting for you.
 
 ## Features
 
-- 🤖 **End-to-end text conversation** &mdash; full Cursor agent capability (shell, edits, tools), with throttled streaming back to the chat (default 800ms)
-- 🗂 **Multi-workspace** &mdash; register many local repos and `/ws use <name>` to switch agents
-- 🧰 **Command system** &mdash; `/help` `/ws` `/reset` `/cancel` `/status` `/model` `/remind` and a `!<text>` interrupt prefix
-- 🖼 **Inbound images** &mdash; send a photo (or an album) to the bot, the agent receives and analyses them automatically
-- 📎 **Outbound attachments** &mdash; the agent calls `claw-attach-image /tmp/x.png` from inside its shell tool, the file is delivered to your chat
-- ⏰ **Reminders** &mdash; absolute, relative or daily times; either plain text reminders or "prompt-on-fire" reminders that auto-trigger the agent
-- 🛡 **Allow-list access control** &mdash; only the Telegram user IDs you list can talk to the bot; everyone else is silently dropped
-- ✋ **Cancel & interrupt** &mdash; soft `/cancel`, hard `!new prompt`
-- 🐧 **Service-friendly** &mdash; clean `SIGTERM` handling, suitable for `systemd` / `pm2` / `launchd`
-- 🧪 **TDD-first** &mdash; 141+ unit & integration tests, full `IMessenger` / `IAgentRuntime` abstractions so the orchestrator never knows about Telegram or the Cursor SDK directly
+- text **End-to-end text conversation** &mdash; full Cursor agent capability (shell, edits, tools), with throttled streaming back to the chat (default 800ms)
+- text **Multi-workspace** &mdash; register many local repos and `/ws use <name>` to switch agents
+- text **Command system** &mdash; `/help` `/ws` `/reset` `/cancel` `/status` `/model` `/remind` and a `!<text>` interrupt prefix
+- text **Inbound images** &mdash; send a photo (or an album) to the bot, the agent receives and analyses them automatically
+- text **Outbound attachments** &mdash; the agent calls `cursorbot-attach-image /tmp/x.png` from inside its shell tool, the file is delivered to your chat
+- text **Reminders** &mdash; absolute, relative or daily times; either plain text reminders or "prompt-on-fire" reminders that auto-trigger the agent
+- text **Allow-list access control** &mdash; only the Telegram user IDs you list can talk to the bot; everyone else is silently dropped
+- text **Cancel & interrupt** &mdash; soft `/cancel`, hard `!new prompt`
+- text **Service-friendly** &mdash; clean `SIGTERM` handling, suitable for `systemd` / `pm2` / `launchd`
+- text **TDD-first** &mdash; 141+ unit & integration tests, full `IMessenger` / `IAgentRuntime` abstractions so the orchestrator never knows about Telegram or the Cursor SDK directly
 
 ## Quickstart (60 seconds)
 
@@ -52,8 +52,8 @@ Cursor's agent capability is amazing &mdash; but it lives **inside the IDE on yo
 ### macOS / Linux / WSL2
 
 ```bash
-git clone https://github.com/lilyjem/cursor-claw.git
-cd cursor-claw
+git clone https://github.com/michelpl/CursorBot.git
+cd cursorbot
 npm install
 cp config.example.json config.json
 # Edit config.json (botToken, allowedUserIds, apiKey) -- or use env vars below
@@ -66,8 +66,8 @@ npm run dev
 ### Windows (PowerShell, native)
 
 ```powershell
-git clone https://github.com/lilyjem/cursor-claw.git
-cd cursor-claw
+git clone https://github.com/michelpl/CursorBot.git
+cd cursorbot
 npm install
 Copy-Item config.example.json config.json
 # Edit config.json (botToken, allowedUserIds, apiKey) -- or use env vars below
@@ -119,11 +119,11 @@ Send a photo (or an album of up to 8) to the bot. They are bundled together with
 Inside its shell tool, the agent can call:
 
 ```bash
-claw-attach-image /path/to/screenshot.png
-claw-attach-file /path/to/report.pdf
+cursorbot-attach-image /path/to/screenshot.png
+cursorbot-attach-file /path/to/report.pdf
 ```
 
-cursor-claw locates its data directory through `<workspace>/.claw/data-dir.txt` (auto-written when the agent runs). If that fails, set `CLAW_DATA_DIR=/path/to/data` explicitly.
+cursorbot locates its data directory through `<workspace>/.cursorbot/data-dir.txt` (auto-written when the agent runs). If that fails, set `CURSORBOT_DATA_DIR=/path/to/data` explicitly.
 
 ### Reminders &mdash; time formats
 
@@ -137,7 +137,7 @@ Default timezone `Asia/Shanghai`, override with `reminders.timezone` in `config.
 
 | Layer | Module |
 | --- | --- |
-| Entry | `src/bin/cursor-claw.ts` |
+| Entry | `src/bin/cursorbot.ts` |
 | Adapters | `src/adapters/telegram/` (grammy, implements `IMessenger`) |
 | Commands | `src/commands/` (parser + dispatcher + handlers) |
 | Orchestrator core | `src/core/orchestrator/` (`AgentOrchestrator` + `StreamRenderer` + busy-policy + `cursorSdkRuntime`) |
@@ -149,7 +149,7 @@ Default timezone `Asia/Shanghai`, override with `reminders.timezone` in `config.
 
 The two abstraction boundaries (`IMessenger`, `IAgentRuntime`) keep the orchestrator unaware of Telegram and the Cursor SDK; tests use `StubMessenger` + `StubAgentRuntime` to drive end-to-end flows.
 
-Full design rationale: [`docs/superpowers/specs/2026-05-05-cursor-claw-design.md`](./docs/superpowers/specs/2026-05-05-cursor-claw-design.md).
+Full design rationale: [`docs/superpowers/specs/2026-05-05-cursorbot-design.md`](./docs/superpowers/specs/2026-05-05-cursorbot-design.md).
 
 ## Testing
 
@@ -169,7 +169,7 @@ npx tsx tests/manual/sdk_smoke.ts          # Cursor SDK only
 
 ## Deployment
 
-`cursor-claw` is a long-running single process. Pick whichever supervisor matches your platform:
+`cursorbot` is a long-running single process. Pick whichever supervisor matches your platform:
 
 - **Linux** &mdash; `systemd` user unit (recommended)
 - **Linux / macOS / Windows** &mdash; `pm2` (Node-native cross-platform)
@@ -181,15 +181,15 @@ Concrete unit files & step-by-step in **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.m
 
 ## Roadmap
 
-- ✅ **M1** &mdash; end-to-end text chat, workspace switching, commands, streaming, cancel, allow-list, systemd-friendly exit
-- ✅ **M2** &mdash; bidirectional attachments, inbound images, reminders
-- 🚧 **M3** &mdash; WeChat adapter skeleton, Clawfox browser integration, MCP config hot-reload
+- text **M1** &mdash; end-to-end text chat, workspace switching, commands, streaming, cancel, allow-list, systemd-friendly exit
+- text **M2** &mdash; bidirectional attachments, inbound images, reminders
+- text **M3** &mdash; WeChat adapter skeleton, Clawfox browser integration, MCP config hot-reload
 
 ## Security
 
 A bot of this kind is essentially a **shell behind a messenger**. Treat it accordingly:
 
-- Keep `TELEGRAM_BOT_TOKEN` and `CURSOR_API_KEY` out of git. The repo's `.gitignore` already excludes `config.json` and `.claw/`. Use environment variables in production.
+- Keep `TELEGRAM_BOT_TOKEN` and `CURSOR_API_KEY` out of git. The repo's `.gitignore` already excludes `config.json` and `.cursorbot/`. Use environment variables in production.
 - Always set `telegram.allowedUserIds` to **just your own Telegram user IDs**. Non-listed messages are silently dropped.
 - If your bot was discovered (`@yourbot` is searchable), turn off groups & make the bot private; or rotate the token.
 - Run as a **non-root** OS user. Don't give the bot more filesystem access than your projects need.
@@ -203,7 +203,7 @@ A few highlights:
 
 - _"Local SDK agents require an explicit 'model'"_ &rarr; you upgraded `@cursor/sdk` past 1.0.x; `AgentOrchestrator` already passes the model on resume, but make sure your `config.json` has a valid `cursor.defaultModel`.
 - _"Telegram: 400 Bad Request: can't parse entities"_ &rarr; HTML mode tried to render a literal `<word>`. Usage messages now use `parseMode: "plain"`; if you see this from custom code, escape angle brackets or switch parse mode.
-- _"`claw-attach-image: command not found`"_ &rarr; you ran `npm install` but did not `npm link` or `npm i -g`; the agent's PATH does not see the local-only bin.
+- _"`cursorbot-attach-image: command not found`"_ &rarr; you ran `npm install` but did not `npm link` or `npm i -g`; the agent's PATH does not see the local-only bin.
 
 ## Contributing
 

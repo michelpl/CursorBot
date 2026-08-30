@@ -6,10 +6,10 @@ export interface LoadConfigOptions {
 }
 
 /**
- * 加载并校验配置：
- * 1. 读取 JSON 文件（默认 ./config.json，可由 configPath 覆盖）
- * 2. 用环境变量覆盖敏感字段：TELEGRAM_BOT_TOKEN / CURSOR_API_KEY
- * 3. 用 zod schema 做严格校验
+ * text
+ * 1. text JSON text ./config.jsontext configPath text
+ * 2. textTELEGRAM_BOT_TOKEN / CURSOR_API_KEY
+ * 3. text zod schema text
  */
 export async function loadConfig(opts: LoadConfigOptions = {}): Promise<AppConfig> {
   const path = opts.configPath ?? "./config.json";
@@ -34,7 +34,7 @@ export async function loadConfig(opts: LoadConfigOptions = {}): Promise<AppConfi
   return parsed.data;
 }
 
-// 让环境变量优先：方便部署时只用 .env / systemd EnvironmentFile 注入敏感信息
+// text .env / systemd EnvironmentFile text
 function applyEnvOverlay(raw: unknown): unknown {
   const r = (raw && typeof raw === "object"
     ? { ...(raw as Record<string, unknown>) }

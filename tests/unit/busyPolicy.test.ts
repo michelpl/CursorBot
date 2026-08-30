@@ -5,30 +5,30 @@ import {
 } from "../../src/core/orchestrator/busyPolicy.js";
 
 describe("parseForcePrefix", () => {
-  it("以 ! 开头 → force=true、剥掉前缀", () => {
+  it("text ! text text force=truetext", () => {
     expect(parseForcePrefix("!fix this")).toEqual({ force: true, text: "fix this" });
   });
-  it("普通文本 → force=false", () => {
+  it("text text force=false", () => {
     expect(parseForcePrefix("hello")).toEqual({ force: false, text: "hello" });
   });
-  it("仅 ! 也接受", () => {
+  it("text ! text", () => {
     expect(parseForcePrefix("!")).toEqual({ force: true, text: "" });
   });
 });
 
 describe("decideBusyAction", () => {
-  it("无活跃 run → run", () => {
+  it("text run text run", () => {
     expect(decideBusyAction({ activeRunStatus: undefined, force: false })).toBe("run");
   });
-  it("有活跃 run + 非 force → reject", () => {
+  it("text run + text force text reject", () => {
     expect(decideBusyAction({ activeRunStatus: "running", force: false })).toBe("reject");
   });
-  it("有活跃 run + force → force-replace", () => {
+  it("text run + force text force-replace", () => {
     expect(decideBusyAction({ activeRunStatus: "running", force: true })).toBe(
       "force-replace",
     );
   });
-  it("活跃 run 已结束 → run", () => {
+  it("text run text text run", () => {
     expect(decideBusyAction({ activeRunStatus: "finished", force: false })).toBe("run");
   });
 });

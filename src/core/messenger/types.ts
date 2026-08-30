@@ -1,4 +1,4 @@
-// 消息接收/发送的中立类型，所有 IMessenger 实现共用。
+// text/text IMessenger text
 
 export interface IncomingTextMessage {
   chatId: string;
@@ -16,7 +16,7 @@ export interface IncomingImageMessage {
   caption?: string;
 }
 
-// M2：媒体组——一次"用户发图"事件可能含 1..N 张图，caption 取首张非空
+// M2text"text"text 1..N textcaption text
 export interface IncomingImageGroup {
   chatId: string;
   userId: number;
@@ -26,7 +26,7 @@ export interface IncomingImageGroup {
 }
 
 export interface SendOptions {
-  // 单条消息级 parseMode 优先于 messenger 全局默认
+  // text parseMode text messenger text
   parseMode?: "HTML" | "Markdown" | "plain";
   replyToMessageId?: string;
 }

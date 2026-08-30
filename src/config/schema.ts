@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// 应用配置的统一 schema：用于 JSON 文件 + 环境变量覆盖后的最终校验。
-// 所有可选字段都给了默认值，让运行时不再处理 undefined。
+// Analyze this image schemaAnalyze these images JSON text + text
+// text undefinedtext
 export const ConfigSchema = z.object({
   telegram: z.object({
     botToken: z.string().min(1),
@@ -12,7 +12,7 @@ export const ConfigSchema = z.object({
     apiKey: z.string().min(1),
     defaultModel: z
       .object({
-        // Cursor SDK 的"自动选择"模型 id 是 "default"（不是 "auto"，会被 ConfigurationError 拒绝）
+        // Cursor SDK text"text"text id text "default"text "auto"text ConfigurationError text
         id: z.string().default("default"),
         params: z
           .array(z.object({ id: z.string(), value: z.string() }))
@@ -22,12 +22,12 @@ export const ConfigSchema = z.object({
     settingSources: z
       .array(z.enum(["project", "user", "team", "mdm", "plugins", "all"]))
       .default(["project", "user"]),
-    // F-10：默认开启 Cursor SDK 沙箱（CWE-269 加固）。
-    // 沙箱具体规则由 ~/.cursor/sandbox.json 或 <workspace>/.cursor/sandbox.json 控制：
-    //   - type: "workspace_readwrite"（默认）/ "workspace_readonly" / "insecure_none"
-    //   - networkPolicy: 网络白/黑名单（拦默认 SSRF / cloud metadata）
+    // F-10text Cursor SDK textCWE-269 text
+    // text ~/.cursor/sandbox.json text <workspace>/.cursor/sandbox.json text
+    //   - type: "workspace_readwrite"text/ "workspace_readonly" / "insecure_none"
+    //   - networkPolicy: text/text SSRF / cloud metadatatext
     //   - additionalReadonlyPaths / additionalReadwritePaths
-    // 用户若需关闭（如运行 npm install / 跨工作区写文件等），可在 config.json 设为 false。
+    // text npm install / text config.json text falsetext
     sandboxOptions: z
       .object({ enabled: z.boolean().default(true) })
       .default({ enabled: true }),
@@ -35,7 +35,7 @@ export const ConfigSchema = z.object({
   workspaces: z
     .object({
       autoRegisterCwd: z.boolean().default(true),
-      // F-07：/ws add 路径白名单；空数组时由主入口注入 cwd + 既有 workspace 路径作为兼容默认
+      // F-07text/ws add text cwd + text workspace text
       allowedRoots: z.array(z.string()).default([]),
     })
     .default({ autoRegisterCwd: true, allowedRoots: [] }),
@@ -46,14 +46,14 @@ export const ConfigSchema = z.object({
   logging: z
     .object({ level: z.enum(["debug", "info", "warn", "error"]).default("info") })
     .default({ level: "info" }),
-  // M2：提醒功能配置（时区 + 最长提前天数）
+  // M2text + text
   reminders: z
     .object({
       timezone: z.string().default("Asia/Shanghai"),
       maxAheadDays: z.number().int().min(1).max(365).default(30),
     })
     .default({ timezone: "Asia/Shanghai", maxAheadDays: 30 }),
-  // M2：出站附件队列与投递策略
+  // M2text
   attachments: z
     .object({
       maxFileSizeBytes: z
@@ -70,26 +70,26 @@ export const ConfigSchema = z.object({
       maxAttachmentsPerFlush: 10,
       maxRetries: 3,
     }),
-  // M2：入站图片配置（最大张数、默认 prompt、media_group debounce）
+  // M2text prompttextmedia_group debouncetext
   images: z
     .object({
       maxImagesPerPrompt: z.number().int().min(1).max(16).default(8),
-      defaultPromptSingle: z.string().default("请分析这张图片"),
-      defaultPromptMulti: z.string().default("请分析这些图片"),
-      // 800ms 给余量：grammy 接续 update 通常 50-200ms，但偶尔有 300-500ms 抖动；
-      // 200ms 偏紧（spec 也注明"太小会拆开 album"），800ms 用户感知延迟仍可接受。
+      defaultPromptSingle: z.string().default("text"),
+      defaultPromptMulti: z.string().default("text"),
+      // 800ms textgrammy text update text 50-200mstext 300-500ms text
+      // 200ms textspec text"text album"text800ms text
       mediaGroupDebounceMs: z.number().int().min(50).max(2000).default(800),
     })
     .default({
       maxImagesPerPrompt: 8,
-      defaultPromptSingle: "请分析这张图片",
-      defaultPromptMulti: "请分析这些图片",
+      defaultPromptSingle: "text",
+      defaultPromptMulti: "text",
       mediaGroupDebounceMs: 800,
     }),
-  // F-06：三层资源 cap，全部带默认值，向后兼容旧 config.json
-  // - message：单用户 messenger 入口限速（防 owner 误操作 + 凭据被盗后的洪水）
-  // - agentCreate：cached miss 进入新 Agent.create / resume 时的限速；cached 命中不计入
-  // - reminders：单用户 reminder 总数上限（防 /remind add 灌爆持久化文件）
+  // F-06text captext config.json
+  // - messagetext messenger text owner text + text
+  // - agentCreatetextcached miss text Agent.create / resume textcached text
+  // - reminderstext reminder text /remind add text
   rateLimit: z
     .object({
       message: z
@@ -117,7 +117,7 @@ export const ConfigSchema = z.object({
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
 
-// 配置错误：在加载阶段抛出，主入口会捕获并友好打印
+// text
 export class ConfigError extends Error {
   constructor(msg: string) {
     super(msg);

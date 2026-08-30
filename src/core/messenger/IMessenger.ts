@@ -9,15 +9,15 @@ import type {
 } from "./types.js";
 
 /**
- * 消息平台中立接口：
- * - 上行：on("text"|"image"|"imageGroup", handler)
- * - 下行：sendText / editText / sendImage / sendDocument / sendTyping
+ * text
+ * - texton("text"|"image"|"imageGroup", handler)
+ * - textsendText / editText / sendImage / sendDocument / sendTyping
  *
- * 微信 / Telegram / 任意 IM 都通过实现此接口接入；AgentOrchestrator 不感知具体平台。
+ * text / Telegram / text IM textAgentOrchestrator text
  *
- * 关于 image vs imageGroup：
- * - "image"：M1 接口，单图触发；M2 之后保留向后兼容，但 TelegramMessenger 不再 emit
- * - "imageGroup"：M2 新增，可承载 1..N 张图（含 album）；caption 首张非空
+ * text image vs imageGrouptext
+ * - "image"textM1 textM2 text TelegramMessenger text emit
+ * - "imageGroup"textM2 text 1..N text albumtextcaption text
  */
 export interface IMessenger {
   start(): Promise<void>;

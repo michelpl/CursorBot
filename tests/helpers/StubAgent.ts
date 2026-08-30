@@ -8,12 +8,12 @@ import type {
 } from "../../src/core/orchestrator/runtime.js";
 
 /**
- * 把 IAgentRuntime / RuntimeAgent / RuntimeRun 都桩化，使集成测试不依赖网络/真实 SDK。
- * 测试可以在拿到 StubRun 后调用 setScript() 注入"将要发出的事件序列"。
+ * text IAgentRuntime / RuntimeAgent / RuntimeRun text/text SDKtext
+ * text StubRun text setScript() text"text"text
  */
 export class StubAgentRuntime implements IAgentRuntime {
   public agents: StubAgent[] = [];
-  // M2：记录 create 与 resume 的完整入参，便于断言 model 透传
+  // M2text create text resume text model text
   public created: CreateAgentOptions[] = [];
   public resumed: Array<{ agentId: string; opts: ResumeAgentOptions }> = [];
 
@@ -34,7 +34,7 @@ export class StubAgentRuntime implements IAgentRuntime {
 
 export class StubAgent implements RuntimeAgent {
   public sentTexts: string[] = [];
-  // M2：记录最近一次 send 的入参，供测试断言（force / images 透传）
+  // M2text send textforce / images text
   public lastSend?: {
     text: string;
     force?: boolean;
@@ -68,16 +68,16 @@ export class StubRun implements RuntimeRun {
     public force: boolean,
   ) {}
 
-  // 测试通过 setScript 注入"将要发出"的事件序列；
-  // 这一步可能在 stream() 已经被消费方调用之后才发生，
-  // 所以 stream() 会先轮询等待 scriptReady。
+  // text setScript text"text"text
+  // text stream() text
+  // text stream() text scriptReadytext
   setScript(events: RuntimeStreamEvent[]): void {
     this.scripted = events;
     this.scriptReady = true;
   }
 
   async *stream(): AsyncGenerator<RuntimeStreamEvent, void> {
-    // 等"测试代码注入了 script" 或 "已经被 cancel"，最多等 ~1s 防止挂死
+    // text"text script" text "text cancel"text ~1s text
     let waited = 0;
     while (!this.scriptReady && this.status === "running" && waited < 200) {
       await new Promise((r) => setTimeout(r, 5));
@@ -86,7 +86,7 @@ export class StubRun implements RuntimeRun {
     for (const e of this.scripted) {
       if (this.status === "cancelled") break;
       yield e;
-      // 模拟真实流式间隔：给 StreamRenderer 的 throttle timer 留触发窗口
+      // text StreamRenderer text throttle timer text
       await new Promise((r) => setTimeout(r, 12));
     }
     this.status = this.status === "cancelled" ? "cancelled" : "finished";

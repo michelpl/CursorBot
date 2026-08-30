@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 describe("loadConfig", () => {
-  it("从 JSON 文件加载并套用默认值", async () => {
+  it("text JSON text", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -36,7 +36,7 @@ describe("loadConfig", () => {
     expect(cfg.paths.dataDir).toBe("./data");
   });
 
-  it("环境变量覆盖文件值", async () => {
+  it("text", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -53,7 +53,7 @@ describe("loadConfig", () => {
     expect(cfg.cursor.apiKey).toBe("K_ENV");
   });
 
-  it("缺失必填字段应抛出 ConfigError", async () => {
+  it("text ConfigError", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -66,7 +66,7 @@ describe("loadConfig", () => {
     await expect(loadConfig({ configPath: p })).rejects.toThrow(/telegram\.botToken/);
   });
 
-  it("allowedUserIds 必须至少一个", async () => {
+  it("allowedUserIds text", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -79,8 +79,8 @@ describe("loadConfig", () => {
     await expect(loadConfig({ configPath: p })).rejects.toThrow(/allowedUserIds/);
   });
 
-  // M2：reminders / attachments / images 三段在用户没显式给值时也应有合理默认值
-  it("M2 新字段 reminders / attachments / images 都有 default", async () => {
+  // M2textreminders / attachments / images text
+  it("M2 text reminders / attachments / images text default", async () => {
     const path = join(dir, "config.json");
     await writeFile(
       path,
@@ -97,8 +97,8 @@ describe("loadConfig", () => {
     expect(cfg.attachments.maxAttachmentsPerFlush).toBe(10);
     expect(cfg.attachments.maxRetries).toBe(3);
     expect(cfg.images.maxImagesPerPrompt).toBe(8);
-    expect(cfg.images.defaultPromptSingle).toBe("请分析这张图片");
-    expect(cfg.images.defaultPromptMulti).toBe("请分析这些图片");
+    expect(cfg.images.defaultPromptSingle).toBe("text");
+    expect(cfg.images.defaultPromptMulti).toBe("text");
     expect(cfg.images.mediaGroupDebounceMs).toBe(800);
   });
 });

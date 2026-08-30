@@ -1,7 +1,7 @@
 import { JsonStore } from "../persist/jsonStore.js";
 import { z } from "zod";
 
-// reminder 两种 kind：text 直接发文本；prompt 触发 agent 跑 prompt
+// reminder text kindtexttext textprompt text agent text prompt
 export interface ReminderText {
   id: string;
   createdAt: number;
@@ -56,8 +56,8 @@ const RemindersFileSchema = z.object({
 });
 
 /**
- * Reminders 持久化：基于 JsonStore，整文件读写。
- * 内存里保留一份 state 以便 list() 同步返回；写操作每次都 persist 落盘。
+ * Reminders text JsonStoretext
+ * text state text list() text persist text
  */
 export class ReminderStore {
   private readonly store: JsonStore<RemindersFile>;
@@ -89,7 +89,7 @@ export class ReminderStore {
     await this.persist();
   }
 
-  // 用回调原子地改某条；不存在则不变
+  // text
   async update(id: string, fn: (r: Reminder) => Reminder): Promise<void> {
     let changed = false;
     this.state.items = this.state.items.map((r) => {
@@ -105,9 +105,9 @@ export class ReminderStore {
   }
 }
 
-// 生成 reminder id：r-{YYYYMMDD-HHMMSS}-{seq3}
-// 进程内按调用顺序自增 seq；进程重启后 seq 归零（不持久化）。
-// 重启后即便 seq 重叠，由于时间戳精度到秒，碰撞概率极低。
+// text reminder idtextr-{YYYYMMDD-HHMMSS}-{seq3}
+// text seqtext seq text
+// text seq text
 let seq = 0;
 export function newReminderId(_at: number, now: number): string {
   const d = new Date(now);

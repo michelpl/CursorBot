@@ -1,5 +1,5 @@
-// CLI 公共逻辑：解析 argv → 复制文件到 pending → append 到 queue.jsonl。
-// 故意不依赖 logger / config / zod，保持冷启动快（agent 端被频繁短任务调用）。
+// CLI text argv text text pending text append text queue.jsonltext
+// text logger / config / zodtextagent text
 import {
   mkdir,
   copyFile,
@@ -18,7 +18,7 @@ interface ParsedArgs {
   dataDirOverride?: string;
 }
 
-// 极简 argv 解析：第一个非 flag 参数视为文件路径，flag 仅支持 --caption / --data-dir
+// text argv text flag textflag text --caption / --data-dir
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) {
     throw new Error("usage: <file> [--caption <text>] [--data-dir <path>]");
@@ -42,28 +42,28 @@ function parseArgs(argv: string[]): ParsedArgs {
   return { filePath: resolve(filePath), caption, dataDirOverride };
 }
 
-// 找数据目录的策略（顺序）：
+// text
 // 1. --data-dir flag
-// 2. CLAW_DATA_DIR env
-// 3. 从 cwd 向上找 .claw/data-dir.txt（cursor-claw 主进程启动时写入）
+// 2. CURSORBOT_DATA_DIR env
+// 3. text cwd text .cursorbot/data-dir.txttextcursorbot text
 async function locateDataDir(override?: string): Promise<string> {
   if (override) return resolve(override);
-  if (process.env.CLAW_DATA_DIR) return resolve(process.env.CLAW_DATA_DIR);
+  if (process.env.CURSORBOT_DATA_DIR) return resolve(process.env.CURSORBOT_DATA_DIR);
   let cur = process.cwd();
   for (let i = 0; i < 32; i++) {
-    const marker = join(cur, ".claw", "data-dir.txt");
+    const marker = join(cur, ".cursorbot", "data-dir.txt");
     try {
       const txt = (await readFile(marker, "utf8")).trim();
       if (txt) return resolve(txt);
     } catch {
-      // 继续向上找
+      // text
     }
     const parent = dirname(cur);
     if (parent === cur) break;
     cur = parent;
   }
   throw new Error(
-    "could not locate cursor-claw data dir; set CLAW_DATA_DIR or run cursor-claw once in this workspace",
+    "could not locate cursorbot data dir; set CURSORBOT_DATA_DIR or run cursorbot once in this workspace",
   );
 }
 
@@ -73,20 +73,20 @@ export async function runAttach(
 ): Promise<void> {
   const { filePath, caption, dataDirOverride } = parseArgs(argv);
   const dataDir = await locateDataDir(dataDirOverride);
-  // stat 不存在会抛 ENOENT，由顶层入口 catch 翻成 exit 1
+  // stat text ENOENTtext catch text exit 1
   const st = await stat(filePath);
   if (!st.isFile()) throw new Error(`not a file: ${filePath}`);
 
   const pendingDir = join(dataDir, "attachments", "pending");
-  // F-13：pending 目录限定 0700；pending 内复制出来的文件 chmod 0600
-  // —— copyFile 会继承 source mode，可能宽于 0600，故显式 chmod。
+  // F-13textpending text 0700textpending text chmod 0600
+  // text copyFile text source modetext 0600text chmodtext
   await mkdir(pendingDir, { recursive: true, mode: 0o700 });
-  // 用 ISO 时间戳（冒号、点替换为连字符）+ 原 basename 防重名
+  // text ISO text+ text basename text
   const isoTs = new Date().toISOString().replace(/[:.]/g, "-");
   const destPath = join(pendingDir, `${isoTs}-${basename(filePath)}`);
   await copyFile(filePath, destPath);
-  // F-13：copyFile 之后立即收紧权限到 0o600。Windows 上 chmod 是 best-effort，
-  // 我们仍调用以与其他平台保持代码路径一致；测试侧已 skip Windows。
+  // F-13textcopyFile text 0o600textWindows text chmod text best-efforttext
+  // text skip Windowstext
   await chmod(destPath, 0o600);
 
   const entry = {
@@ -97,12 +97,12 @@ export async function runAttach(
     queuedAt: Date.now(),
   };
   const queuePath = join(dataDir, "attachments", "queue.jsonl");
-  // F-13：queue.jsonl 限定 0o600
+  // F-13textqueue.jsonl text 0o600
   await appendFile(queuePath, JSON.stringify(entry) + "\n", {
     encoding: "utf8",
     mode: 0o600,
   });
 
-  // 给 agent 一个能 grep 的成功标志
+  // text agent text grep text
   process.stdout.write(`queued: ${destPath}\n`);
 }

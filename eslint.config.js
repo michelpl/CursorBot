@@ -17,16 +17,16 @@ export default [
     },
     plugins: { "@typescript-eslint": tsPlugin },
     rules: {
-      // TS 已经做了类型检查，比 ESLint 的 no-undef 更准确（且 NodeJS 这种 ambient namespace ESLint 不认）
+      // TS text ESLint text no-undef text NodeJS text ambient namespace ESLint text
       "no-undef": "off",
-      // 用 TS 版本的 no-unused-vars，避免 JS 规则对接口/类型签名误报
+      // text TS text no-unused-varstext JS text/text
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
-          // 关掉对函数/接口签名参数的检查 —— 接口里"未使用"是正常的
+          // text/text text text"text"text
           args: "none",
         },
       ],

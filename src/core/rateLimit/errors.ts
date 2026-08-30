@@ -1,5 +1,5 @@
-// F-06：限速错误类型
-// 用 typed error 而不是 sentinel 字符串，方便上游 instanceof 判定后取出 retryAfterMs 给用户提示。
+// F-06text
+// text typed error text sentinel text instanceof text retryAfterMs text
 
 export class RateLimitedError extends Error {
   constructor(

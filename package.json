@@ -1,18 +1,18 @@
 {
-  "name": "cursor-claw",
+  "name": "cursorbot",
   "version": "0.1.2",
   "private": true,
-  "description": "Telegram <-> Cursor SDK bridge — drive Cursor agents on your local repos from your phone.",
+  "description": "Telegram <-> Cursor SDK bridge text drive Cursor agents on your local repos from your phone.",
   "type": "module",
   "license": "MIT",
   "author": "Jem Li",
-  "homepage": "https://github.com/lilyjem/cursor-claw#readme",
+  "homepage": "https://github.com/michelpl/CursorBot#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lilyjem/cursor-claw.git"
+    "url": "git+https://github.com/michelpl/CursorBot.git"
   },
   "bugs": {
-    "url": "https://github.com/lilyjem/cursor-claw/issues"
+    "url": "https://github.com/michelpl/CursorBot/issues"
   },
   "keywords": [
     "cursor",
@@ -32,14 +32,14 @@
     "node": ">=20.10.0"
   },
   "bin": {
-    "cursor-claw": "./dist/bin/cursor-claw.js",
-    "claw-attach-image": "./dist/tools/attach-image.js",
-    "claw-attach-file": "./dist/tools/attach-file.js"
+    "cursorbot": "./dist/bin/cursorbot.js",
+    "cursorbot-attach-image": "./dist/tools/attach-image.js",
+    "cursorbot-attach-file": "./dist/tools/attach-file.js"
   },
   "scripts": {
-    "dev": "tsx watch src/bin/cursor-claw.ts",
+    "dev": "tsx watch src/bin/cursorbot.ts",
     "build": "tsup",
-    "start": "node dist/bin/cursor-claw.js",
+    "start": "node dist/bin/cursorbot.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src tests",
@@ -72,7 +72,7 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
-  "//security_overrides": "F-03 修复：把 install-time 路径穿越风险的传递依赖链全部升级到当前 advisory 已修复版本（tar 7.5.11+ / node-gyp 10.3.1+ / cacache 18 / make-fetch-happen 13 / http-proxy-agent 7 / @tootallnate/once 2）。注意：undici 故意不在此列，F-02 已标 Accepted-Risk，等待 @cursor/sdk → @connectrpc/connect-node 上游升级后再处理。",
+  "//security_overrides": "F-03 text install-time text advisory texttar 7.5.11+ / node-gyp 10.3.1+ / cacache 18 / make-fetch-happen 13 / http-proxy-agent 7 / @tootallnate/once 2textundici textF-02 text Accepted-Risktext @cursor/sdk text @connectrpc/connect-node text",
   "overrides": {
     "tar": "^7.5.11",
     "cacache": "^18.0.4",

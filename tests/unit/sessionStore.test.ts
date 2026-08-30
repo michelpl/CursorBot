@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 describe("SessionStore", () => {
-  it("初始时 get 返回 undefined", async () => {
+  it("text get text undefined", async () => {
     const ss = new SessionStore(join(dir, "sessions.json"));
     await ss.init();
     expect(ss.get("default")).toBeUndefined();
@@ -26,7 +26,7 @@ describe("SessionStore", () => {
     expect(ss.get("default")?.agentId).toBe("agent-x");
   });
 
-  it("clear 删除条目", async () => {
+  it("clear text", async () => {
     const ss = new SessionStore(join(dir, "sessions.json"));
     await ss.init();
     await ss.set("default", { agentId: "agent-x" });
@@ -34,7 +34,7 @@ describe("SessionStore", () => {
     expect(ss.get("default")).toBeUndefined();
   });
 
-  it("持久化后能恢复", async () => {
+  it("text", async () => {
     const p = join(dir, "sessions.json");
     const a = new SessionStore(p);
     await a.init();

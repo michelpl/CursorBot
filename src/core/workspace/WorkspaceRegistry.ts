@@ -1,7 +1,7 @@
 import { JsonStore } from "../persist/jsonStore.js";
 import { z } from "zod";
 
-// 工作区元数据：name 是 SDK agentId 的"逻辑标签"，path 是实际 cwd。
+// textname text SDK agentId text"text"textpath text cwdtext
 export interface Workspace {
   name: string;
   path: string;
@@ -30,11 +30,11 @@ export class WorkspaceError extends Error {
 }
 
 /**
- * 工作区注册表：维护 name→Workspace 的映射 + 当前活跃工作区。
+ * text nametextWorkspace text + text
  *
- * - 不真正切换 process.cwd（agent SDK 用每个 workspace 独立的 cwd 参数即可）
- * - 写盘是显式 persist，避免高频 add/use 都触发文件 IO；命令 handler 在变更后调一次
- * - 自动注册 cwd 为 default：仅在没有任何 active 时触发，避免覆盖用户已有配置
+ * - text process.cwdtextagent SDK text workspace text cwd text
+ * - text persisttext add/use text IOtext handler text
+ * - text cwd text defaulttext active text
  */
 export class WorkspaceRegistry {
   private readonly store: JsonStore<RegistryFile>;

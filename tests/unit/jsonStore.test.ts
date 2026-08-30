@@ -19,7 +19,7 @@ interface Foo {
 }
 
 describe("JsonStore", () => {
-  it("readOrInit 返回默认值并写盘", async () => {
+  it("readOrInit text", async () => {
     const store = new JsonStore<Foo>(join(dir, "foo.json"), { x: 0 });
     const data = await store.readOrInit();
     expect(data).toEqual({ x: 0 });
@@ -27,7 +27,7 @@ describe("JsonStore", () => {
     expect(onDisk).toEqual({ x: 0 });
   });
 
-  it("write 后 read 能拿到新值", async () => {
+  it("write text read text", async () => {
     const store = new JsonStore<Foo>(join(dir, "foo.json"), { x: 0 });
     await store.readOrInit();
     await store.write({ x: 7, y: "hi" });
@@ -35,7 +35,7 @@ describe("JsonStore", () => {
     expect(back).toEqual({ x: 7, y: "hi" });
   });
 
-  it("原子写：写入完成后不会留下 *.tmp", async () => {
+  it("text *.tmp", async () => {
     const store = new JsonStore<Foo>(join(dir, "foo.json"), { x: 0 });
     await store.write({ x: 99 });
     const onDisk = JSON.parse(await readFile(join(dir, "foo.json"), "utf8"));
@@ -43,21 +43,21 @@ describe("JsonStore", () => {
     await expect(stat(join(dir, "foo.json.tmp"))).rejects.toThrow();
   });
 
-  it("启动时若发现遗留 *.tmp 文件则清理", async () => {
+  it("text *.tmp text", async () => {
     await writeFile(join(dir, "foo.json.tmp"), "garbage", "utf8");
     const store = new JsonStore<Foo>(join(dir, "foo.json"), { x: 1 });
     await store.readOrInit();
     await expect(stat(join(dir, "foo.json.tmp"))).rejects.toThrow();
   });
 
-  it("update 能基于当前值写回", async () => {
+  it("update text", async () => {
     const store = new JsonStore<Foo>(join(dir, "foo.json"), { x: 1 });
     await store.readOrInit();
     await store.update((cur) => ({ ...cur, x: cur.x + 10 }));
     expect((await store.read()).x).toBe(11);
   });
 
-  it("F-12: 传入 validator 时，读取非法 JSON shape 会拒绝", async () => {
+  it("F-12: text validator text JSON shape text", async () => {
     const target = join(dir, "bad.json");
     await writeFile(target, JSON.stringify({ x: "not-number" }), "utf8");
     const store = new JsonStore<Foo>(join(dir, "bad.json"), { x: 0 }, (raw) => {
@@ -73,11 +73,11 @@ describe("JsonStore", () => {
     await expect(store.readOrInit()).rejects.toThrow("invalid Foo");
   });
 
-  // F-13：JsonStore 落盘文件应限制为 0600（仅 owner 可读写）
-  // 跨主机的 dataDir 经常含会话历史 / reminder 内容 / 用户标识，
-  // 默认 0644 在多用户主机上可被同主机其他用户读取。
+  // F-13textJsonStore text 0600text owner text
+  // text dataDir text / reminder text / text
+  // text 0644 text
   it.skipIf(process.platform === "win32")(
-    "F-13: write 后文件 mode 必须是 0o600（仅 owner 读写）",
+    "F-13: write text mode text 0o600text owner text",
     async () => {
       const target = join(dir, "perm.json");
       const store = new JsonStore<Foo>(target, { x: 0 });
@@ -87,9 +87,9 @@ describe("JsonStore", () => {
     },
   );
 
-  // F-13：父目录若被 JsonStore 创建，权限应是 0o700
+  // F-13text JsonStore text 0o700
   it.skipIf(process.platform === "win32")(
-    "F-13: 父目录被 mkdir 时 mode 必须是 0o700",
+    "F-13: text mkdir text mode text 0o700",
     async () => {
       const sub = join(dir, "subdir");
       const store = new JsonStore<Foo>(join(sub, "perm.json"), { x: 0 });

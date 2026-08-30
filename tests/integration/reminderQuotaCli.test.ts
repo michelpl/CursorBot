@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { handleRemind } from "../../src/commands/handlers/remind.js";
 import { ReminderQuota } from "../../src/core/reminders/ReminderQuota.js";
 
-// F-06 PR e：/remind add 接入 ReminderQuota 的端到端测试
+// F-06 PR etext/remind add text ReminderQuota text
 
 function makeFakeMessenger() {
   const sent: Array<{ chatId: string; text: string }> = [];
@@ -34,7 +34,7 @@ function makeFakeScheduler(initialItems: unknown[] = []) {
 }
 
 describe("handleRemind + ReminderQuota", () => {
-  it("第 101 个 reminder 收到中文超限提示，且未写入 store", async () => {
+  it("text 101 text reminder text store", async () => {
     const messenger = makeFakeMessenger();
     const initial = Array.from({ length: 100 }, (_, i) => ({
       id: `r${i}`,
@@ -50,8 +50,8 @@ describe("handleRemind + ReminderQuota", () => {
     const quota = new ReminderQuota(scheduler as never, { maxPerUser: 100 });
 
     await handleRemind(
-      ["add", "text", "1m", "测试"],
-      "add text 1m 测试",
+      ["add", "text", "1m", "text"],
+      "add text 1m text",
       {
         chatId: "C",
         userId: 1,
@@ -68,7 +68,7 @@ describe("handleRemind + ReminderQuota", () => {
     expect(scheduler.items.length).toBe(100);
     expect(scheduler.add).not.toHaveBeenCalled();
     expect(messenger.sent[messenger.sent.length - 1]?.text).toMatch(
-      /Reminder 已达上限/,
+      /Reminder text/,
     );
   });
 });

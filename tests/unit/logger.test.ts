@@ -2,17 +2,17 @@ import { describe, it, expect } from "vitest";
 import { redactSensitive } from "../../src/logger.js";
 
 describe("redactSensitive", () => {
-  it("把 botToken 替换为 ***", () => {
+  it("text botToken text ***", () => {
     const out = redactSensitive({ botToken: "1234:abcdef" });
     expect(out).toEqual({ botToken: "***" });
   });
 
-  it("把 apiKey 替换为 ***", () => {
+  it("text apiKey text ***", () => {
     const out = redactSensitive({ apiKey: "secret" });
     expect(out).toEqual({ apiKey: "***" });
   });
 
-  it("递归处理嵌套对象", () => {
+  it("text", () => {
     const out = redactSensitive({
       cursor: { apiKey: "sk-...", model: "auto" },
       telegram: { botToken: "t1", parseMode: "HTML" },
@@ -23,12 +23,12 @@ describe("redactSensitive", () => {
     });
   });
 
-  it("非敏感字段保持不变", () => {
+  it("text", () => {
     const out = redactSensitive({ a: 1, b: "ok" });
     expect(out).toEqual({ a: 1, b: "ok" });
   });
 
-  it("处理数组", () => {
+  it("text", () => {
     const out = redactSensitive([{ apiKey: "x" }, { ok: true }]);
     expect(out).toEqual([{ apiKey: "***" }, { ok: true }]);
   });

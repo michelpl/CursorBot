@@ -1,82 +1,82 @@
-# M2 e2e smoke 验证清单（手工）
+# M2 e2e smoke text
 
-> 自动化测试已经覆盖了所有单元 / 集成层（136 tests, 24 files 全绿）。
-> 这份清单覆盖**只能在真实 Telegram bot + 真实 Cursor API key 下**才能验证的端到端行为：
-> 入站图片、出站附件、reminders 的实际触发与人机交互。
+> text / text136 tests, 24 files text
+> text**text Telegram bot + text Cursor API key text**text
+> textreminders text
 >
-> 每条勾选后，建议跑一次 `git status` 与 `npm test -- --run` 确认仓库干净 + 测试绿。
+> text `git status` text `npm test -- --run` text + text
 >
-> 对应 `docs/superpowers/specs/2026-05-05-cursor-claw-design.md` 第 7 节验收标准。
+> text `docs/superpowers/specs/2026-05-05-cursorbot-design.md` text 7 text
 
-## 前置准备
+## text
 
-1. 准备好 `config.json`（或对应环境变量）：
+1. text `config.json`text
    - `telegram.botToken`
-   - `telegram.allowedUserIds`（必须包含发起测试的 Telegram userId）
+   - `telegram.allowedUserIds`text Telegram userIdtext
    - `cursor.apiKey`
-2. 在 active workspace 根目录开一个 shell，跑：
+2. text active workspace text shelltext
    ```bash
    npm install
    npm run build
-   npm link            # 让 PATH 上有 claw-attach-image / claw-attach-file
+   npm link            # text PATH text cursorbot-attach-image / cursorbot-attach-file
    ```
-3. 建议 active workspace 是一个真实的 git 仓库（agent 才有内容可分析）。
+3. text active workspace text git textagent text
 
-## Step 1：跑全套自动化（已完成 ✅）
+## Step 1text text
 
 ```bash
 npm test -- --run && npm run typecheck && npm run lint && npm run build
 ```
 
-预期：
+text
 
-- [x] 136 tests 全绿
-- [x] typecheck / lint 干净
-- [x] `dist/bin/cursor-claw.js`、`dist/tools/attach-image.js`、`dist/tools/attach-file.js` 三个产物均生成且带 `#!/usr/bin/env node` shebang
+- [x] 136 tests text
+- [x] typecheck / lint text
+- [x] `dist/bin/cursorbot.js`text`dist/tools/attach-image.js`text`dist/tools/attach-file.js` text `#!/usr/bin/env node` shebang
 
-## Step 2：启动 dev
+## Step 2text dev
 
 ```bash
-npx tsx src/bin/cursor-claw.ts
+npx tsx src/bin/cursorbot.ts
 ```
 
-观察 startup log：
+text startup logtext
 
-- [ ] `cursor-claw started` 日志出现
-- [ ] 没有 grammy 409（说明没有重复实例）
-- [ ] active workspace 根下 `.claw/data-dir.txt` 已写入，内容是绝对路径指向 `paths.dataDir`
+- [ ] `cursorbot started` text
+- [ ] text grammy 409text
+- [ ] active workspace text `.cursorbot/data-dir.txt` text `paths.dataDir`
 
-## Step 3：9 条端到端验收（每条勾选后再勾下一条）
+## Step 3text9 text
 
-### A 入站图片
+### A text
 
-- [ ] **A1 单图入站**：用 Telegram 发一张带 caption "这是什么？" 的图给 bot；agent 应有流式回复
-- [ ] **A2 album 入站**：用 Telegram 一次发 3 张图（同 album）；server 端应仅一次 `incoming imageGroup` 日志（n: 3）；agent 单 prompt 收到 3 张图
+- [ ] **A1 text**text Telegram text caption "text" text bottextagent text
+- [ ] **A2 album text**text Telegram text 3 text albumtextserver text `incoming imageGroup` textn: 3textagent text prompt text 3 text
 
-### B 出站附件
+### B text
 
-- [ ] **B1 出站附件**：让 agent 在 shell 跑：
+- [ ] **B1 text**text agent text shell text
   ```bash
-  echo test > /tmp/clawtest.txt && claw-attach-file /tmp/clawtest.txt --caption "test"
+  echo test > /tmp/clawtest.txt && cursorbot-attach-file /tmp/clawtest.txt --caption "test"
   ```
-  run 结束后 Telegram 立即收到该文件
-- [ ] **B2 多附件 + 重试**：让 agent 一次 run 中多发 2 张图（`claw-attach-image`）；都送达；`<dataDir>/queue.jsonl` 在送达后为空
+  run text Telegram text
+- [ ] **B2 text + text**text agent text run text 2 text`cursorbot-attach-image`text`<dataDir>/queue.jsonl` text
 
 ### C Reminders
 
-- [ ] **C1 reminders text**：`/remind add text 10s 起床啦`；10 秒后收到 "⏰ 起床啦"；`<dataDir>/reminders.json` 已不含此条
-- [ ] **C2 reminders prompt**：`/remind add prompt 10s 一句话总结这个仓库`；10 秒后看到 agent 流式回复
-- [ ] **C3 reminders busy 重排**：先 `/remind add prompt 5s 一句话总结仓库`，立刻 `!写一个 200 字小说让 agent 卡住`（超长 prompt）；scheduler 触发时 busy → 收到 "⏰ 提醒延后 1 分钟" 通知；60s 内 agent 仍忙时收到 "⏰ 提醒：..." 退化文本
-- [ ] **C4 list / del**：`/remind add text 1h 测试`；`/remind list` 应见此条；记下 id；`/remind del <id>`；再 list 不再显示
+- [ ] **C1 reminders text**text`/remind add text 10s text`text10 text "text text"text`<dataDir>/reminders.json` text
+- [ ] **C2 reminders prompt**text`/remind add prompt 10s text`text10 text agent text
+- [ ] **C3 reminders busy text**text `/remind add prompt 5s text`text `!text 200 text agent text`text prompttextscheduler text busy text text "text text 1 text" text60s text agent text "text text..." text
+- [ ] **C4 list / del**text`/remind add text 1h text`text`/remind list` text idtext`/remind del <id>`text list text
 
-## Step 4：每条验收后留干净 git 状态
+## Step 4text git text
 
 ```bash
-git status   # 应输出 nothing to commit
+git status   # text nothing to commit
 ```
 
-## Step 5：M2 收尾 commit
+## Step 5textM2 text commit
 
 ```bash
-git commit --allow-empty -m "chore(m2): e2e smoke 全 9 条验收完成"
+git commit --allow-empty -m "chore(m2): e2e smoke text 9 text"
 ```

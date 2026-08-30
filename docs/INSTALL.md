@@ -21,7 +21,7 @@ This document covers the four supported installation paths in detail. If you jus
 | RAM | 256 MB free for the process | 512 MB+ during agent runs |
 | OS | macOS 12+, Ubuntu 20.04+, Windows 10 21H2+ | latest LTS |
 
-> Cursor SDK itself spins up additional sub-processes (the agent shell). Plan for ~ 200–500 MB extra during a busy run.
+> Cursor SDK itself spins up additional sub-processes (the agent shell). Plan for ~ 200text500 MB extra during a busy run.
 
 ## macOS
 
@@ -31,8 +31,8 @@ brew install node@22
 brew link --force --overwrite node@22
 
 # 2. Clone & install
-git clone https://github.com/lilyjem/cursor-claw.git
-cd cursor-claw
+git clone https://github.com/michelpl/CursorBot.git
+cd cursorbot
 npm install
 
 # 3. Configure
@@ -56,8 +56,8 @@ nvm install 22
 nvm use 22
 
 # 2. Clone & install
-git clone https://github.com/lilyjem/cursor-claw.git
-cd cursor-claw
+git clone https://github.com/michelpl/CursorBot.git
+cd cursorbot
 npm install
 
 # 3. Configure (same as macOS)
@@ -85,8 +85,8 @@ node --version    # should print v20.10+ or v22.x
 npm --version
 
 # 2. Clone & install
-git clone https://github.com/lilyjem/cursor-claw.git
-cd cursor-claw
+git clone https://github.com/michelpl/CursorBot.git
+cd cursorbot
 npm install
 
 # 3. Configure
@@ -105,9 +105,9 @@ npm run dev
 
 ### Windows-specific gotchas
 
-- The `bin` field in `package.json` (`cursor-claw`, `claw-attach-image`, `claw-attach-file`) is installed by npm as a `.cmd` shim plus a Bash launcher. Both work from PowerShell and CMD.
-- The agent's shell tool runs `cmd.exe` by default on Windows, so any examples that say `bash`-style command substitution may need translating. cursor-claw itself does not assume bash.
-- `tsx watch` on native Windows occasionally misses file rewrites done by editors that use `move` instead of `write` (VSCode is fine; some editors are not). If you see `npm run dev` not reloading, try `tsx --watch --watch-mode=poll src/bin/cursor-claw.ts`.
+- The `bin` field in `package.json` (`cursorbot`, `cursorbot-attach-image`, `cursorbot-attach-file`) is installed by npm as a `.cmd` shim plus a Bash launcher. Both work from PowerShell and CMD.
+- The agent's shell tool runs `cmd.exe` by default on Windows, so any examples that say `bash`-style command substitution may need translating. cursorbot itself does not assume bash.
+- `tsx watch` on native Windows occasionally misses file rewrites done by editors that use `move` instead of `write` (VSCode is fine; some editors are not). If you see `npm run dev` not reloading, try `tsx --watch --watch-mode=poll src/bin/cursorbot.ts`.
 - Long paths: enable Win32 long-path support if your repo lives deep inside `C:\Users\<you>\OneDrive\...`.
 
 ## WSL2 (Windows + Ubuntu)
@@ -124,7 +124,7 @@ Then **inside the Ubuntu shell**, follow the [Linux steps](#linux) above as norm
 
 ## Optional: install attach CLI globally
 
-The agent's shell tool calls `claw-attach-image` / `claw-attach-file` to send files back to your chat. These bins ship inside the cursor-claw package, but to make them available on the agent's `PATH`, do **one** of:
+The agent's shell tool calls `cursorbot-attach-image` / `cursorbot-attach-file` to send files back to your chat. These bins ship inside the cursorbot package, but to make them available on the agent's `PATH`, do **one** of:
 
 ```bash
 # A. Build the project, then link locally (recommended for dev)
@@ -136,14 +136,14 @@ npm run build
 npm install -g .
 ```
 
-Both put `claw-attach-image` / `claw-attach-file` on your `PATH`. Verify:
+Both put `cursorbot-attach-image` / `cursorbot-attach-file` on your `PATH`. Verify:
 
 ```bash
-claw-attach-image --help
-claw-attach-file --help
+cursorbot-attach-image --help
+cursorbot-attach-file --help
 ```
 
-> The CLIs locate cursor-claw's data directory through `<workspace>/.claw/data-dir.txt`, written automatically when an agent starts. If that breakcrumb is missing, set `CLAW_DATA_DIR=/path/to/cursor-claw/data` explicitly.
+> The CLIs locate cursorbot's data directory through `<workspace>/.cursorbot/data-dir.txt`, written automatically when an agent starts. If that breakcrumb is missing, set `CURSORBOT_DATA_DIR=/path/to/cursorbot/data` explicitly.
 
 ## Verify the install
 

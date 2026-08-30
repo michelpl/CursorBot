@@ -5,12 +5,12 @@ import { WorkspaceError } from "../../core/workspace/WorkspaceRegistry.js";
 import { isPathWithinAllowedRoots } from "../../core/workspace/pathPolicy.js";
 import { escapeHtml } from "../../util/html.js";
 
-// /ws 命令家族：
-//   /ws list                        显示所有工作区，标记当前为活跃
-//   /ws use <name>                  切换活跃工作区（影响后续 prompt 的 cwd）
-//   /ws add <name> <abs-path>       注册新工作区（路径必须存在 + 是目录）
-//   /ws remove <name>               注销（不能注销活跃工作区）
-//   /ws path                        当前路径
+// /ws text
+//   /ws list                        text
+//   /ws use <name>                  text prompt text cwdtext
+//   /ws add <name> <abs-path>       text + text
+//   /ws remove <name>               text
+//   /ws path                        text
 export async function handleWs(
   args: string[],
   ctx: CommandContext,
@@ -21,13 +21,13 @@ export async function handleWs(
       const items = ctx.registry.list();
       const active = ctx.registry.getActive()?.name;
       if (items.length === 0) {
-        await ctx.messenger.sendText(ctx.chatId, "（没有工作区）");
+        await ctx.messenger.sendText(ctx.chatId, "text");
         return;
       }
       const body = items
         .map(
           (w) =>
-            `${w.name === active ? "▶ " : "  "}${escapeHtml(w.name)} → ${escapeHtml(w.path)}`,
+            `${w.name === active ? "text " : "  "}${escapeHtml(w.name)} text ${escapeHtml(w.path)}`,
         )
         .join("\n");
       await ctx.messenger.sendText(ctx.chatId, body);
@@ -36,7 +36,7 @@ export async function handleWs(
     case "use": {
       const name = args[1];
       if (!name) {
-        await ctx.messenger.sendText(ctx.chatId, "用法：/ws use <name>", {
+        await ctx.messenger.sendText(ctx.chatId, "text/ws use <name>", {
           parseMode: "plain",
         });
         return;
@@ -51,7 +51,7 @@ export async function handleWs(
         }
         throw e;
       }
-      await ctx.messenger.sendText(ctx.chatId, `当前工作区：${escapeHtml(name)}`);
+      await ctx.messenger.sendText(ctx.chatId, `text${escapeHtml(name)}`);
       return;
     }
     case "add": {
@@ -60,23 +60,23 @@ export async function handleWs(
       if (!name || !path) {
         await ctx.messenger.sendText(
           ctx.chatId,
-          "用法：/ws add <name> <abs-path>",
+          "text/ws add <name> <abs-path>",
           { parseMode: "plain" },
         );
         return;
       }
       if (!isAbsolute(path)) {
-        await ctx.messenger.sendText(ctx.chatId, "路径必须是绝对路径");
+        await ctx.messenger.sendText(ctx.chatId, "text");
         return;
       }
       try {
         const s = await stat(path);
         if (!s.isDirectory()) {
-          await ctx.messenger.sendText(ctx.chatId, "路径不是目录");
+          await ctx.messenger.sendText(ctx.chatId, "text");
           return;
         }
       } catch {
-        await ctx.messenger.sendText(ctx.chatId, "路径不存在");
+        await ctx.messenger.sendText(ctx.chatId, "text");
         return;
       }
       if (ctx.workspaceAllowedRoots && ctx.workspaceAllowedRoots.length > 0) {
@@ -87,7 +87,7 @@ export async function handleWs(
         if (!allowed) {
           await ctx.messenger.sendText(
             ctx.chatId,
-            "路径不在允许的工作区根目录内",
+            "text",
           );
           return;
         }
@@ -102,13 +102,13 @@ export async function handleWs(
         }
         throw e;
       }
-      await ctx.messenger.sendText(ctx.chatId, `已添加工作区：${escapeHtml(name)}`);
+      await ctx.messenger.sendText(ctx.chatId, `text${escapeHtml(name)}`);
       return;
     }
     case "remove": {
       const name = args[1];
       if (!name) {
-        await ctx.messenger.sendText(ctx.chatId, "用法：/ws remove <name>", {
+        await ctx.messenger.sendText(ctx.chatId, "text/ws remove <name>", {
           parseMode: "plain",
         });
         return;
@@ -123,21 +123,21 @@ export async function handleWs(
         }
         throw e;
       }
-      await ctx.messenger.sendText(ctx.chatId, `已注销工作区：${escapeHtml(name)}`);
+      await ctx.messenger.sendText(ctx.chatId, `text${escapeHtml(name)}`);
       return;
     }
     case "path": {
       const w = ctx.registry.getActive();
       await ctx.messenger.sendText(
         ctx.chatId,
-        w ? escapeHtml(w.path) : "（没有活跃工作区）",
+        w ? escapeHtml(w.path) : "text",
       );
       return;
     }
     default:
       await ctx.messenger.sendText(
         ctx.chatId,
-        "用法：/ws list|use|add|remove|path",
+        "text/ws list|use|add|remove|path",
       );
   }
 }

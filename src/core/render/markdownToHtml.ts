@@ -1,21 +1,21 @@
-// HTML 实体转义：先做这一步，再做行内 markdown 替换。
+// HTML text markdown text
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /**
- * 极简 markdown → Telegram HTML 渲染。
+ * text markdown text Telegram HTML text
  *
- * 支持：
- * - 三反引号代码块（含可选语言标签，渲染时被忽略）
- * - 行内代码 `code`
- * - **粗体** _斜体_
+ * text
+ * - text
+ * - text `code`
+ * - **text** _text_
  * - [text](url)
  *
- * 实现策略：
- * 1. 先把代码块切走，避免内部被行内规则误伤
- * 2. 代码块体做 HTML 转义后包裹 <pre><code>...
- * 3. 普通文本段先做 HTML 转义，再做行内替换（注意顺序：粗体在斜体之前，避免 ** 被 _ 干扰）
+ * text
+ * 1. text
+ * 2. text HTML text <pre><code>...
+ * 3. text HTML text ** text _ text
  */
 export function markdownToHtml(input: string): string {
   if (!input) return "";
@@ -46,20 +46,20 @@ export function markdownToHtml(input: string): string {
     .join("");
 }
 
-// 普通段：先 HTML 转义；再做行内替换
+// text HTML text
 function renderInline(text: string): string {
   let out = escapeHtml(text);
 
-  // 行内代码 — 优先处理，避免里面的 _ * 被后面的规则吃掉
+  // text text text _ * text
   out = out.replace(/`([^`\n]+)`/g, (_, inner: string) => `<code>${inner}</code>`);
-  // 粗体 **...** 在斜体之前
+  // text **...** text
   out = out.replace(/\*\*([^*\n]+)\*\*/g, (_, inner: string) => `<b>${inner}</b>`);
-  // 斜体 _..._（避免吃 __ 双下划线和单词内的下划线）
+  // text _..._text __ text
   out = out.replace(
     /(^|[^_])_([^_\n]+)_(?!_)/g,
     (_, pre: string, inner: string) => `${pre}<i>${inner}</i>`,
   );
-  // 链接：URL 必须 http(s) 协议，避免被注入 javascript: 等
+  // textURL text http(s) text javascript: text
   out = out.replace(
     /\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g,
     (_, label: string, url: string) => `<a href="${url}">${label}</a>`,

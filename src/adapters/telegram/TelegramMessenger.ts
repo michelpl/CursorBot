@@ -17,21 +17,21 @@ import { logger } from "../../logger.js";
 export interface TelegramMessengerConfig {
   botToken: string;
   parseMode: "HTML" | "Markdown" | "plain";
-  // 适配器层也做一道白名单，避免 emit 事件之前就泄漏给业务层
+  // text emit text
   allowedUserIds?: number[];
-  // M2: 媒体组 debounce 时间，太小会拆开 album，太大用户感知延迟
+  // M2: text debounce text albumtext
   mediaGroupDebounceMs?: number;
-  // F-05: 单次图片下载的字节上限。配置项必填上限，下载逻辑分三层强制（file_size 预检查 / content-length / 流式累计）。
+  // F-05: textfile_size text / content-length / text
   maxFileSizeBytes: number;
 }
 
-// ImageGroupBuffer 内部缓存的 photo 元数据。
-// 关键点：data 改成 Promise<string>，让 grammy 收到 update 时可以立刻 push 占位（不阻塞下一条 update），
-// 真正的下载在后台并发跑。flush 时 await 所有 promise 再 emit。
+// ImageGroupBuffer text photo text
+// textdata text Promise<string>text grammy text update text push text updatetext
+// textflush text await text promise text emittext
 //
-// 为什么必须这样：grammy 的 `bot.on("message:photo", async (ctx) => {...})` 串行执行 async handler，
-// 前一个 handler 不返回下一条 update 不会处理。如果 handler 内 await 下载（耗时 ~1s），
-// album 内 3 张图的 push 间隔会被拉长到 1-2s，远超 debounce 200ms，导致 buffer 把它们拆成 3 个独立 group。
+// textgrammy text `bot.on("message:photo", async (ctx) => {...})` text async handlertext
+// text handler text update text handler text await text ~1stext
+// album text 3 text push text 1-2stext debounce 200mstext buffer text 3 text grouptext
 interface PendingPhoto {
   dataPromise: Promise<string>;
   mimeType: string;
@@ -42,11 +42,11 @@ interface PendingPhoto {
 }
 
 /**
- * grammy 实现 IMessenger。
- * - long-polling：bot.start() 是常驻任务，整个进程启动后只调一次
- * - 图片接收（M2）：用 ImageGroupBuffer 把同 media_group_id 的多张图聚合成单次 imageGroup 事件；
- *   旧的单图 image 事件保留 listener 注册能力但不再 emit（迁移到 imageGroup）
- * - editText 容错：Telegram 对"内容未变化"的编辑会抛错，吞掉
+ * grammy text IMessengertext
+ * - long-pollingtextbot.start() text
+ * - textM2text ImageGroupBuffer text media_group_id text imageGroup text
+ *   text image text listener text emittext imageGrouptext
+ * - editText textTelegram text"text"text
  */
 export class TelegramMessenger implements IMessenger {
   private bot?: GrammyBot;
@@ -61,17 +61,17 @@ export class TelegramMessenger implements IMessenger {
     const bot = createBot(this.cfg.botToken);
     this.bot = bot;
 
-    // M2: 用 ImageGroupBuffer 把同 media_group_id 的多张图聚合成一次 emit
+    // M2: text ImageGroupBuffer text media_group_id text emit
     this.buffer = new ImageGroupBuffer<PendingPhoto>(
       this.cfg.mediaGroupDebounceMs ?? 200,
       (items) => {
         if (items.length === 0) return;
-        // fire 是同步签名，但下载是异步的——这里 fire-and-forget：
-        // await 完成所有 dataPromise 后再分发给 imageGroup listeners。
+        // fire text fire-and-forgettext
+        // await text dataPromise text imageGroup listenerstext
         void (async () => {
           try {
             const datas = await Promise.all(items.map((i) => i.dataPromise));
-            // 用首张的 chatId / userId 作为整组的"主"标识；caption 取首条非空
+            // text chatId / userId text"text"textcaption text
             const first = items[0]!;
             const caption = items.map((i) => i.caption).find((c) => !!c);
             const group: IncomingImageGroup = {
@@ -88,7 +88,7 @@ export class TelegramMessenger implements IMessenger {
           } catch (e) {
             logger.error(
               { err: (e as Error).message },
-              "imageGroup 下载失败，丢弃整组",
+              "imageGroup text",
             );
           }
         })();
@@ -111,10 +111,10 @@ export class TelegramMessenger implements IMessenger {
       }
     });
 
-    // 注意：handler 故意写成同步，里面**不 await** getFile / fetch。
-    // 关键不变量：grammy 串行 dispatch async handler，前一个 await 不返回下一条 update 就不会进 push，
-    // 必然把 album 内多张图的 push 间隔拉长到 1-2s 而 debounce 仅 200ms → buffer 拆开多组。
-    // 让 handler 立刻返回，下载放在 dataPromise 里后台并发跑。
+    // texthandler text**text await** getFile / fetchtext
+    // textgrammy text dispatch async handlertext await text update text pushtext
+    // text album text push text 1-2s text debounce text 200ms text buffer text
+    // text handler text dataPromise text
     bot.on("message:photo", (ctx) => {
       const userId = ctx.from?.id;
       if (userId === undefined) return;
@@ -137,11 +137,11 @@ export class TelegramMessenger implements IMessenger {
         botToken: this.cfg.botToken,
         maxFileSizeBytes: this.cfg.maxFileSizeBytes,
       });
-      // 关键：promise 已经"未 await"地附加在 item 上 push 进 buffer；
-      // 必须挂一个 catch 防止 unhandledRejection 直接让 node 崩溃，
-      // 真正的错误捕获在 buffer flush 的 Promise.all 那里。
+      // textpromise text"text await"text item text push text buffertext
+      // text catch text unhandledRejection text node text
+      // text buffer flush text Promise.all text
       dataPromise.catch(() => {
-        /* 在 flush 的 try/catch 里被处理 */
+        /* text flush text try/catch text */
       });
       const item: PendingPhoto = {
         dataPromise,
@@ -154,9 +154,9 @@ export class TelegramMessenger implements IMessenger {
       this.buffer?.push(groupId, item);
     });
 
-    // bot.start 是 long-polling 阻塞任务，这里不 await，让它后台跑
+    // bot.start text long-polling text awaittext
     bot.start({ drop_pending_updates: true }).catch((e) => {
-      logger.error({ err: (e as Error).message }, "grammy 退出");
+      logger.error({ err: (e as Error).message }, "grammy text");
     });
   }
 
@@ -216,7 +216,7 @@ export class TelegramMessenger implements IMessenger {
       );
     } catch (e) {
       const msg = (e as Error).message ?? "";
-      // Telegram 对内容相同的编辑会抛 400，这是设计行为，吞掉
+      // Telegram text 400text
       if (msg.includes("message is not modified")) return;
       throw e;
     }
@@ -253,7 +253,7 @@ export class TelegramMessenger implements IMessenger {
   }
 
   private requireBot(): GrammyBot {
-    if (!this.bot) throw new Error("TelegramMessenger 未启动");
+    if (!this.bot) throw new Error("TelegramMessenger text");
     return this.bot;
   }
 

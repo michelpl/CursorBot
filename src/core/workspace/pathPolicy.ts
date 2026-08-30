@@ -1,9 +1,9 @@
 import { realpath } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 
-// F-07：workspace 路径白名单策略
-// 使用 realpath 解析 symlink，再用 resolve + sep 做边界判断，避免 /repo_evil
-// 这类 sibling 目录通过简单 startsWith('/repo') 绕过。
+// F-07textworkspace text
+// text realpath text symlinktext resolve + sep text /repo_evil
+// text sibling text startsWith('/repo') text
 
 function isWithinRoot(path: string, root: string): boolean {
   const p = resolve(path);

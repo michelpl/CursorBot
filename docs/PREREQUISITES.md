@@ -1,6 +1,6 @@
 # Prerequisites
 
-cursor-claw needs three small things before it can run. None of them require payment, none of them take more than a few minutes.
+cursorbot needs three small things before it can run. None of them require payment, none of them take more than a few minutes.
 
 1. [A Telegram bot token](#1-telegram-bot-token-via-botfather)
 2. [Your own Telegram user ID](#2-your-own-telegram-user-id)
@@ -17,7 +17,7 @@ Once you have all three, drop them into `config.json` (or set them as env vars) 
 1. In Telegram, search **`@BotFather`** and tap **Start**.
 2. Send `/newbot`.
 3. BotFather will ask for a **display name** (free text, e.g. "Jem Personal Claw").
-4. Then for a **username** (must end in `bot`, e.g. `jem_claw_bot`).
+4. Then for a **username** (must end in `bot`, e.g. `cursorbot_example_bot`).
 5. BotFather replies with:
    ```
    Use this token to access the HTTP API:
@@ -74,7 +74,7 @@ While still talking to BotFather, also do:
 
 ## 2. Your own Telegram user ID
 
-cursor-claw uses an allow-list (`telegram.allowedUserIds`) to drop messages from anyone but you. To add yourself, you need your numeric Telegram user ID.
+cursorbot uses an allow-list (`telegram.allowedUserIds`) to drop messages from anyone but you. To add yourself, you need your numeric Telegram user ID.
 
 The easiest way:
 
@@ -114,7 +114,7 @@ Multiple owners? Add more numbers: `[123456789, 987654321]`.
 
 ## 3. Cursor API key
 
-cursor-claw drives Cursor agents through `@cursor/sdk`, which authenticates via API key.
+cursorbot drives Cursor agents through `@cursor/sdk`, which authenticates via API key.
 
 1. Open Cursor docs: <https://cursor.com/cn/docs/sdk/typescript>.
 2. In the Cursor desktop app, go to **Settings** &rarr; **API Keys** (or follow the link in the doc).
@@ -154,7 +154,7 @@ You can swap at any time from Telegram with `/model <id>`. The change takes effe
 
 ### Quota & cost
 
-Cursor SDK runs are billed against your Cursor account. cursor-claw doesn't impose any local quota; if you forget about a long-running agent, it can burn through tokens. Two safety nets:
+Cursor SDK runs are billed against your Cursor account. cursorbot doesn't impose any local quota; if you forget about a long-running agent, it can burn through tokens. Two safety nets:
 
 - `/cancel` &mdash; stop the current run cleanly.
 - `!<text>` &mdash; force-interrupt and start a new run with new text.
@@ -186,8 +186,8 @@ After step 1, 2, 3, your `config.json` should look like:
   "attachments": { "maxFileSizeBytes": 20971520, "maxAttachmentsPerFlush": 10, "maxRetries": 3 },
   "images": {
     "maxImagesPerPrompt": 8,
-    "defaultPromptSingle": "请分析这张图片",
-    "defaultPromptMulti": "请分析这些图片",
+    "defaultPromptSingle": "text",
+    "defaultPromptMulti": "text",
     "mediaGroupDebounceMs": 800
   }
 }

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { ConfigSchema } from "../../src/config/schema.js";
 
-// F-06 PR c：rateLimit 段加入 schema 后的兼容性 + 自定义生效测试
+// F-06 PR ctextrateLimit text schema text + text
 describe("ConfigSchema rateLimit", () => {
-  it("旧 config（无 rateLimit）解析后获得默认值", () => {
+  it("text configtext rateLimittext", () => {
     const cfg = ConfigSchema.parse({
       telegram: { botToken: "x", allowedUserIds: [1] },
       cursor: { apiKey: "y" },
@@ -15,7 +15,7 @@ describe("ConfigSchema rateLimit", () => {
     expect(cfg.rateLimit.reminders.maxPerUser).toBe(100);
   });
 
-  it("用户自定义阈值生效；未给的字段仍走默认", () => {
+  it("text", () => {
     const cfg = ConfigSchema.parse({
       telegram: { botToken: "x", allowedUserIds: [1] },
       cursor: { apiKey: "y" },

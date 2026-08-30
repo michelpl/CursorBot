@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 const exec = promisify(execFile);
 
-// 直接用 npx tsx 跑源文件，避免每个 unit test 都需要先 build
+// text npx tsx text unit test text build
 const TSX = "npx";
 const ARGS = (entry: string, ...rest: string[]): string[] => [
   "tsx",
@@ -22,18 +22,18 @@ const ARGS = (entry: string, ...rest: string[]): string[] => [
   ...rest,
 ];
 
-// 每个 spawn 用例都允许较长超时（首次跑 tsx 冷启动可能慢）
+// text spawn text tsx text
 const SLOW = 30000;
 
-describe("attach CLI（spawn）", () => {
+describe("attach CLItextspawntext", () => {
   let dir: string;
   let dataDir: string;
   let workDir: string;
   let imgPath: string;
 
   beforeEach(async () => {
-    // macOS 的 /var/folders 实际是 /private/var/folders 的 symlink，
-    // 子进程 process.cwd() 会解析成 realpath。这里同样 realpath 以便比较一致。
+    // macOS text /var/folders text /private/var/folders text symlinktext
+    // text process.cwd() text realpathtext realpath text
     dir = await realpath(await mkdtemp(join(tmpdir(), "att-")));
     dataDir = join(dir, "data");
     workDir = join(dir, "work");
@@ -52,12 +52,12 @@ describe("attach CLI（spawn）", () => {
   ): Promise<{ stdout: string; stderr: string }> {
     return exec(TSX, ARGS(entry, ...rest), {
       cwd: workDir,
-      env: { ...process.env, CLAW_DATA_DIR: dataDir },
+      env: { ...process.env, CURSORBOT_DATA_DIR: dataDir },
     });
   }
 
   it(
-    "attach-image 写入 pending + queue 一行",
+    "attach-image text pending + queue text",
     { timeout: SLOW },
     async () => {
       await runWithEnv("attach-image.ts", imgPath, "--caption", "hi");
@@ -71,10 +71,10 @@ describe("attach CLI（spawn）", () => {
       expect(entry.kind).toBe("image");
       expect(entry.cwd).toBe(workDir);
       expect(entry.caption).toBe("hi");
-      // pending 文件存在
+      // pending text
       await stat(entry.path);
-      // F-13: pending 拷贝出来的文件 mode 必须是 0o600
-      // queue.jsonl 必须是 0o600；pending 目录必须是 0o700
+      // F-13: pending text mode text 0o600
+      // queue.jsonl text 0o600textpending text 0o700
       if (process.platform !== "win32") {
         const pendingFileSt = await stat(entry.path);
         expect(pendingFileSt.mode & 0o777).toBe(0o600);
@@ -87,7 +87,7 @@ describe("attach CLI（spawn）", () => {
   );
 
   it(
-    "attach-file 接受任意扩展",
+    "attach-file text",
     { timeout: SLOW },
     async () => {
       const pdf = join(workDir, "y.pdf");
@@ -102,13 +102,13 @@ describe("attach CLI（spawn）", () => {
     },
   );
 
-  it("源文件不存在 → exit 1", { timeout: SLOW }, async () => {
+  it("text text exit 1", { timeout: SLOW }, async () => {
     await expect(
       runWithEnv("attach-image.ts", "/nonexistent.png"),
     ).rejects.toMatchObject({ code: 1 });
   });
 
-  it("没 CLAW_DATA_DIR 也没 .claw → exit 1", { timeout: SLOW }, async () => {
+  it("text CURSORBOT_DATA_DIR text .cursorbot text exit 1", { timeout: SLOW }, async () => {
     await expect(
       exec(TSX, ARGS("attach-image.ts", imgPath), { cwd: workDir }),
     ).rejects.toMatchObject({ code: 1 });

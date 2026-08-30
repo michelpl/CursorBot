@@ -6,14 +6,14 @@ export interface ReminderQuotaOptions {
 }
 
 /**
- * F-06：Reminder 数量上限包装层。
+ * F-06textReminder text
  *
- * 设计上不修改 ReminderStore 本体：
- * - ReminderStore 只负责持久化 / list / add / remove
- * - ReminderQuota 只负责在 add 前按 createdBy 做 cap 检查
+ * text ReminderStore text
+ * - ReminderStore text / list / add / remove
+ * - ReminderQuota text add text createdBy text cap text
  *
- * 依赖类型用 Pick<ReminderStore, "list" | "add">，所以生产可传 ReminderScheduler
- * （它同样暴露 list/add），测试也可传 fake store。
+ * text Pick<ReminderStore, "list" | "add">text ReminderScheduler
+ * text list/addtext fake storetext
  */
 export class ReminderQuota {
   constructor(

@@ -14,7 +14,7 @@ afterEach(async () => {
 });
 
 describe("/ws add allowedRoots", () => {
-  it("拒绝 allowedRoots 外部路径", async () => {
+  it("text allowedRoots text", async () => {
     dir = await mkdtemp(join(tmpdir(), "ws-cmd-"));
     const allowed = join(dir, "allowed");
     const outside = join(dir, "outside");
@@ -35,12 +35,12 @@ describe("/ws add allowedRoots", () => {
     expect(registry.get("x")).toBeUndefined();
     expect(
       messenger.sentTexts.some((m) =>
-        m.text.includes("路径不在允许的工作区根目录内"),
+        m.text.includes("text"),
       ),
     ).toBe(true);
   });
 
-  it("允许 allowedRoots 内部路径", async () => {
+  it("text allowedRoots text", async () => {
     dir = await mkdtemp(join(tmpdir(), "ws-cmd-"));
     const allowed = join(dir, "allowed");
     const child = join(allowed, "child");

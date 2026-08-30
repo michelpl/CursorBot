@@ -1,6 +1,6 @@
 /**
- * 用户白名单：M1 阶段唯一的访问控制机制。
- * 不在 allowedUserIds 中的消息会在 messenger 层就被静默 drop。
+ * textM1 text
+ * text allowedUserIds text messenger text droptext
  */
 export class AccessControl {
   private readonly set: Set<number>;
@@ -15,7 +15,7 @@ export class AccessControl {
     return this.set.has(userId);
   }
 
-  // primary user：用于把 reminders 等服务端推送的消息发给"主用户"（默认白名单第一个）
+  // primary usertext reminders text"text"text
   primaryUserId(): number | undefined {
     return this.first;
   }

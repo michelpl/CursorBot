@@ -7,7 +7,7 @@ import { ReminderStore } from "../../src/core/reminders/ReminderStore.js";
 import { AttachmentQueue } from "../../src/core/attachments/AttachmentQueue.js";
 
 describe("F-12 persisted schema validation", () => {
-  it("WorkspaceRegistry 拒绝非法 persisted shape", async () => {
+  it("WorkspaceRegistry text persisted shape", async () => {
     const dir = await mkdtemp(join(tmpdir(), "schema-ws-"));
     try {
       const p = join(dir, "ws.json");
@@ -21,7 +21,7 @@ describe("F-12 persisted schema validation", () => {
     }
   });
 
-  it("ReminderStore 拒绝非法 reminder item", async () => {
+  it("ReminderStore text reminder item", async () => {
     const dir = await mkdtemp(join(tmpdir(), "schema-rem-"));
     try {
       const p = join(dir, "reminders.json");
@@ -33,7 +33,7 @@ describe("F-12 persisted schema validation", () => {
     }
   });
 
-  it("AttachmentQueue 跳过 JSON object shape 不合法的行", async () => {
+  it("AttachmentQueue text JSON object shape text", async () => {
     const dir = await mkdtemp(join(tmpdir(), "schema-queue-"));
     try {
       const p = join(dir, "queue.jsonl");

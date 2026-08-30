@@ -1,11 +1,11 @@
 # Deployment Guide
 
-cursor-claw is a long-lived single Node process. To run it 24/7, hand the process to a supervisor that will:
+cursorbot is a long-lived single Node process. To run it 24/7, hand the process to a supervisor that will:
 
 - Restart it after crashes
 - Restart it after host reboots
 - Pipe logs to disk
-- Honour `SIGTERM` for clean shutdowns (already implemented in `src/bin/cursor-claw.ts`)
+- Honour `SIGTERM` for clean shutdowns (already implemented in `src/bin/cursorbot.ts`)
 
 This guide covers four supervisors plus a note on Docker.
 
@@ -15,7 +15,7 @@ This guide covers four supervisors plus a note on Docker.
 - [Windows &mdash; NSSM](#windows--nssm)
 - [Docker (planned, not in this milestone)](#docker-planned)
 
-Pick whatever you're already comfortable operating &mdash; cursor-claw doesn't care.
+Pick whatever you're already comfortable operating &mdash; cursorbot doesn't care.
 
 ---
 
@@ -24,13 +24,13 @@ Pick whatever you're already comfortable operating &mdash; cursor-claw doesn't c
 All deployment paths assume you've **built once**:
 
 ```bash
-git clone https://github.com/lilyjem/cursor-claw.git /opt/cursor-claw
-cd /opt/cursor-claw
+git clone https://github.com/michelpl/CursorBot.git /opt/cursorbot
+cd /opt/cursorbot
 npm ci --omit=dev=false   # we still need devDeps for tsup at build time
 npm run build             # produces dist/
 ```
 
-After this, `node dist/bin/cursor-claw.js` is the production entry point. (No `tsx` needed in production.)
+After this, `node dist/bin/cursorbot.js` is the production entry point. (No `tsx` needed in production.)
 
 ---
 
@@ -40,25 +40,25 @@ Recommended for any modern Linux distro. The service runs as **your normal user*
 
 ### 1. Place the unit file
 
-Create `~/.config/systemd/user/cursor-claw.service`:
+Create `~/.config/systemd/user/cursorbot.service`:
 
 ```ini
 [Unit]
-Description=cursor-claw &mdash; Telegram <-> Cursor SDK bridge
+Description=cursorbot &mdash; Telegram <-> Cursor SDK bridge
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/cursor-claw
-ExecStart=/usr/bin/node %h/cursor-claw/dist/bin/cursor-claw.js
+WorkingDirectory=%h/cursorbot
+ExecStart=/usr/bin/node %h/cursorbot/dist/bin/cursorbot.js
 Restart=on-failure
 RestartSec=5
 KillSignal=SIGTERM
 TimeoutStopSec=15
 
 # Pass secrets from a separate, root-readable-only file
-EnvironmentFile=%h/.config/cursor-claw/env
+EnvironmentFile=%h/.config/cursorbot/env
 
 # Tighten permissions a bit
 NoNewPrivileges=true
@@ -71,13 +71,13 @@ WantedBy=default.target
 ### 2. Place secrets
 
 ```bash
-mkdir -p ~/.config/cursor-claw
-chmod 700 ~/.config/cursor-claw
-cat > ~/.config/cursor-claw/env <<'EOF'
+mkdir -p ~/.config/cursorbot
+chmod 700 ~/.config/cursorbot
+cat > ~/.config/cursorbot/env <<'EOF'
 TELEGRAM_BOT_TOKEN=123456:AA...
 CURSOR_API_KEY=key_...
 EOF
-chmod 600 ~/.config/cursor-claw/env
+chmod 600 ~/.config/cursorbot/env
 ```
 
 ### 3. Enable and start
@@ -88,21 +88,21 @@ sudo loginctl enable-linger $USER
 
 # Reload systemd, enable & start
 systemctl --user daemon-reload
-systemctl --user enable --now cursor-claw.service
+systemctl --user enable --now cursorbot.service
 
 # Check status & logs
-systemctl --user status cursor-claw.service
-journalctl --user -u cursor-claw.service -f
+systemctl --user status cursorbot.service
+journalctl --user -u cursorbot.service -f
 ```
 
 To upgrade after a `git pull`:
 
 ```bash
-cd ~/cursor-claw
+cd ~/cursorbot
 git pull
 npm ci
 npm run build
-systemctl --user restart cursor-claw.service
+systemctl --user restart cursorbot.service
 ```
 
 ---
@@ -117,16 +117,16 @@ systemctl --user restart cursor-claw.service
 npm install -g pm2
 ```
 
-### 2. Start cursor-claw under pm2
+### 2. Start cursorbot under pm2
 
 ```bash
-cd /path/to/cursor-claw
-pm2 start dist/bin/cursor-claw.js \
-  --name cursor-claw \
+cd /path/to/cursorbot
+pm2 start dist/bin/cursorbot.js \
+  --name cursorbot \
   --kill-timeout 10000 \
   --update-env
 
-pm2 logs cursor-claw
+pm2 logs cursorbot
 pm2 status
 ```
 
@@ -145,8 +145,8 @@ For repeatable config, put this at the repo root as `ecosystem.config.cjs`:
 module.exports = {
   apps: [
     {
-      name: 'cursor-claw',
-      script: './dist/bin/cursor-claw.js',
+      name: 'cursorbot',
+      script: './dist/bin/cursorbot.js',
       cwd: __dirname,
       instances: 1,
       autorestart: true,
@@ -168,7 +168,7 @@ Then `pm2 start ecosystem.config.cjs`.
 
 ### 1. Place the plist
 
-Create `~/Library/LaunchAgents/com.jem.cursor-claw.plist`:
+Create `~/Library/LaunchAgents/com.jem.cursorbot.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -176,16 +176,16 @@ Create `~/Library/LaunchAgents/com.jem.cursor-claw.plist`:
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.jem.cursor-claw</string>
+  <string>com.jem.cursorbot</string>
 
   <key>ProgramArguments</key>
   <array>
     <string>/opt/homebrew/bin/node</string>
-    <string>/Users/jem/cursor-claw/dist/bin/cursor-claw.js</string>
+    <string>/Users/jem/cursorbot/dist/bin/cursorbot.js</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/jem/cursor-claw</string>
+  <string>/Users/jem/cursorbot</string>
 
   <key>RunAtLoad</key>
   <true/>
@@ -201,9 +201,9 @@ Create `~/Library/LaunchAgents/com.jem.cursor-claw.plist`:
   </dict>
 
   <key>StandardOutPath</key>
-  <string>/Users/jem/Library/Logs/cursor-claw.out.log</string>
+  <string>/Users/jem/Library/Logs/cursorbot.out.log</string>
   <key>StandardErrorPath</key>
-  <string>/Users/jem/Library/Logs/cursor-claw.err.log</string>
+  <string>/Users/jem/Library/Logs/cursorbot.err.log</string>
 </dict>
 </plist>
 ```
@@ -213,15 +213,15 @@ Create `~/Library/LaunchAgents/com.jem.cursor-claw.plist`:
 ### 2. Load it
 
 ```bash
-launchctl load -w ~/Library/LaunchAgents/com.jem.cursor-claw.plist
-launchctl list | grep cursor-claw
-tail -f ~/Library/Logs/cursor-claw.out.log
+launchctl load -w ~/Library/LaunchAgents/com.jem.cursorbot.plist
+launchctl list | grep cursorbot
+tail -f ~/Library/Logs/cursorbot.out.log
 ```
 
 To stop / unload:
 
 ```bash
-launchctl unload -w ~/Library/LaunchAgents/com.jem.cursor-claw.plist
+launchctl unload -w ~/Library/LaunchAgents/com.jem.cursorbot.plist
 ```
 
 > Putting secrets in a plist on disk means anyone who can read your home directory can read them. For better hygiene, write a wrapper shell script that `source`s a `chmod 600` env file, then call **that** from `ProgramArguments`.
@@ -230,7 +230,7 @@ launchctl unload -w ~/Library/LaunchAgents/com.jem.cursor-claw.plist
 
 ## Windows &mdash; NSSM
 
-[NSSM](https://nssm.cc/) (the Non-Sucking Service Manager) wraps any executable into a real Windows Service. Useful when you want cursor-claw to start at boot regardless of whether anyone has logged in.
+[NSSM](https://nssm.cc/) (the Non-Sucking Service Manager) wraps any executable into a real Windows Service. Useful when you want cursorbot to start at boot regardless of whether anyone has logged in.
 
 ### 1. Install NSSM
 
@@ -241,15 +241,15 @@ Download from <https://nssm.cc/>, unzip, and either put `nssm.exe` on your PATH 
 In an **elevated** PowerShell (Run as Administrator):
 
 ```powershell
-nssm install cursor-claw
+nssm install cursorbot
 ```
 
 In the dialog that pops up:
 
 - **Application** tab:
   - **Path**: `C:\Program Files\nodejs\node.exe`
-  - **Startup directory**: `C:\path\to\cursor-claw`
-  - **Arguments**: `dist\bin\cursor-claw.js`
+  - **Startup directory**: `C:\path\to\cursorbot`
+  - **Arguments**: `dist\bin\cursorbot.js`
 
 - **Details** tab: friendly description
 
@@ -259,7 +259,7 @@ In the dialog that pops up:
   CURSOR_API_KEY=key_...
   ```
 
-- **I/O** tab: optional &mdash; redirect stdout/stderr to files like `C:\ProgramData\cursor-claw\out.log`.
+- **I/O** tab: optional &mdash; redirect stdout/stderr to files like `C:\ProgramData\cursorbot\out.log`.
 
 - **Exit actions** tab:
   - On exit: **Restart application**
@@ -271,17 +271,17 @@ Click **Install service**.
 ### 3. Start it
 
 ```powershell
-Start-Service cursor-claw
-Get-Service cursor-claw
+Start-Service cursorbot
+Get-Service cursorbot
 
 # Logs (if you redirected I/O):
-Get-Content C:\ProgramData\cursor-claw\out.log -Wait
+Get-Content C:\ProgramData\cursorbot\out.log -Wait
 ```
 
 To remove later:
 
 ```powershell
-nssm remove cursor-claw confirm
+nssm remove cursorbot confirm
 ```
 
 > Alternative: just run `pm2-windows-service` &mdash; it's effectively pm2 + NSSM glued together.
@@ -292,10 +292,10 @@ nssm remove cursor-claw confirm
 
 Not in this milestone. The two reasons it isn't trivial:
 
-1. **Host filesystem access**. cursor-claw drives Cursor agents over your **local** repos. Inside a container, you'd have to bind-mount each workspace, set permissions correctly, and resolve symlinks. Doable, but no longer a one-liner.
-2. **Cursor SDK sub-processes**. The agent's shell tool currently spawns processes inside the same OS environment as cursor-claw. Inside a container, that means everything the agent does (including `git`, `npm`, `python`...) has to be installed in the image. Convenient for a CI job, less convenient for "drive my desktop".
+1. **Host filesystem access**. cursorbot drives Cursor agents over your **local** repos. Inside a container, you'd have to bind-mount each workspace, set permissions correctly, and resolve symlinks. Doable, but no longer a one-liner.
+2. **Cursor SDK sub-processes**. The agent's shell tool currently spawns processes inside the same OS environment as cursorbot. Inside a container, that means everything the agent does (including `git`, `npm`, `python`...) has to be installed in the image. Convenient for a CI job, less convenient for "drive my desktop".
 
-A future image will probably ship as a **container with the SDK pre-installed**, plus a documented `--mount` recipe for binding host workspaces. Until then, run cursor-claw as a native process.
+A future image will probably ship as a **container with the SDK pre-installed**, plus a documented `--mount` recipe for binding host workspaces. Until then, run cursorbot as a native process.
 
 ---
 
@@ -311,7 +311,7 @@ If any of these fail, check **[FAQ.md](./FAQ.md)** or the supervisor's own log c
 
 | Supervisor | Log command |
 | --- | --- |
-| systemd | `journalctl --user -u cursor-claw.service -e` |
-| pm2 | `pm2 logs cursor-claw` |
-| launchd | `tail -f ~/Library/Logs/cursor-claw.out.log` |
-| NSSM | `Get-Content C:\ProgramData\cursor-claw\out.log -Wait` |
+| systemd | `journalctl --user -u cursorbot.service -e` |
+| pm2 | `pm2 logs cursorbot` |
+| launchd | `tail -f ~/Library/Logs/cursorbot.out.log` |
+| NSSM | `Get-Content C:\ProgramData\cursorbot\out.log -Wait` |

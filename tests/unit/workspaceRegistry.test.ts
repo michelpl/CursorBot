@@ -17,7 +17,7 @@ afterEach(async () => {
 });
 
 describe("WorkspaceRegistry", () => {
-  it("init 时若 active 不存在，自动注册 cwd 为 default", async () => {
+  it("init text active text cwd text default", async () => {
     const reg = new WorkspaceRegistry(join(dir, "workspaces.json"));
     await reg.init({ autoRegisterCwd: true, cwd: dir });
     expect(reg.getActive()?.name).toBe("default");
@@ -35,26 +35,26 @@ describe("WorkspaceRegistry", () => {
     await reg.persist();
   });
 
-  it("add 重名 → 抛错", async () => {
+  it("add text text text", async () => {
     const reg = new WorkspaceRegistry(join(dir, "workspaces.json"));
     await reg.init({ autoRegisterCwd: true, cwd: dir });
     reg.add("alpha", dir);
     expect(() => reg.add("alpha", dir)).toThrow(WorkspaceError);
   });
 
-  it("use 不存在的工作区 → 抛错", async () => {
+  it("use text text text", async () => {
     const reg = new WorkspaceRegistry(join(dir, "workspaces.json"));
     await reg.init({ autoRegisterCwd: true, cwd: dir });
     expect(() => reg.use("ghost")).toThrow(WorkspaceError);
   });
 
-  it("remove active → 抛错", async () => {
+  it("remove active text text", async () => {
     const reg = new WorkspaceRegistry(join(dir, "workspaces.json"));
     await reg.init({ autoRegisterCwd: true, cwd: dir });
     expect(() => reg.remove("default")).toThrow(WorkspaceError);
   });
 
-  it("持久化后能恢复", async () => {
+  it("text", async () => {
     const p = join(dir, "workspaces.json");
     const a = new WorkspaceRegistry(p);
     await a.init({ autoRegisterCwd: true, cwd: dir });

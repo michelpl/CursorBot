@@ -36,18 +36,18 @@ describe("/remind", () => {
     };
   }
 
-  it("/remind add text 10m 喝水 → scheduler.add 被调", async () => {
-    await handleRemind(["add", "text", "10m", "喝水"], "10m 喝水", ctx());
+  it("/remind add text 10m text text scheduler.add text", async () => {
+    await handleRemind(["add", "text", "10m", "text"], "10m text", ctx());
     expect(
       (scheduler.add as unknown as { mock: { calls: unknown[][] } }).mock.calls
         .length,
     ).toBe(1);
   });
 
-  it("/remind add prompt 1h 看 BTC → kind=prompt 携 prompt 文本", async () => {
+  it("/remind add prompt 1h text BTC text kind=prompt text prompt text", async () => {
     await handleRemind(
-      ["add", "prompt", "1h", "看 BTC 价格"],
-      "1h 看 BTC 价格",
+      ["add", "prompt", "1h", "text BTC text"],
+      "1h text BTC text",
       ctx(),
     );
     const args = (
@@ -57,17 +57,17 @@ describe("/remind", () => {
     ).mock.calls[0]!;
     const r = args[0] as { kind: string; prompt?: string };
     expect(r.kind).toBe("prompt");
-    expect(r.prompt).toBe("看 BTC 价格");
+    expect(r.prompt).toBe("text BTC text");
   });
 
-  it("/remind add 缺 kind → 友好报错", async () => {
+  it("/remind add text kind text text", async () => {
     await handleRemind(["add"], "", ctx());
-    expect(messenger.sentTexts.some((m) => m.text.includes("用法"))).toBe(true);
+    expect(messenger.sentTexts.some((m) => m.text.includes("text"))).toBe(true);
   });
 
-  it("/remind add 时间格式不对 → 友好报错且不调 add", async () => {
+  it("/remind add text text text add", async () => {
     await handleRemind(["add", "text", "abcd", "x"], "abcd x", ctx());
-    expect(messenger.sentTexts.some((m) => m.text.includes("不识别"))).toBe(
+    expect(messenger.sentTexts.some((m) => m.text.includes("text"))).toBe(
       true,
     );
     expect(
@@ -76,12 +76,12 @@ describe("/remind", () => {
     ).toBe(0);
   });
 
-  it("/remind list → 列出现有 + 空时友好提示", async () => {
+  it("/remind list text text + text", async () => {
     await handleRemind(["list"], "", ctx());
-    expect(messenger.sentTexts.some((m) => m.text.includes("无"))).toBe(true);
+    expect(messenger.sentTexts.some((m) => m.text.includes("text"))).toBe(true);
   });
 
-  it("/remind del r-1 → scheduler.remove 被调", async () => {
+  it("/remind del r-1 text scheduler.remove text", async () => {
     await handleRemind(["del", "r-1"], "r-1", ctx());
     expect(
       (scheduler.remove as unknown as { mock: { calls: unknown[] } }).mock
@@ -89,12 +89,12 @@ describe("/remind", () => {
     ).toBe(1);
   });
 
-  // 回归测试：dispatch 进来的 rest 形如 "add text 1h 测试"（含 sub 关键字 add）
-  // handleAdd 必须把 sub `add` 也剥掉，否则 body 会变成 "add text 1h 测试"。
-  it("dispatch 真实 rest 形如 'add text 1h 测试' → body 应只是 '测试'", async () => {
+  // textdispatch text rest text "add text 1h text"text sub text addtext
+  // handleAdd text sub `add` text body text "add text 1h text"text
+  it("dispatch text rest text 'add text 1h text' text body text 'text'", async () => {
     await handleRemind(
-      ["add", "text", "1h", "测试"],
-      "add text 1h 测试",
+      ["add", "text", "1h", "text"],
+      "add text 1h text",
       ctx(),
     );
     const args = (
@@ -104,24 +104,24 @@ describe("/remind", () => {
     ).mock.calls[0]!;
     const r = args[0] as { kind: string; text?: string };
     expect(r.kind).toBe("text");
-    expect(r.text).toBe("测试");
+    expect(r.text).toBe("text");
   });
 
-  // 回归测试：USAGE 文本里有 <时间>/<内容>/<id>，如果默认走 HTML parseMode
-  // Telegram 会把它当成未知标签，直接 400 抛错。所有提示文本必须显式 parseMode: "plain"。
-  it("USAGE / 错误提示 / 删除回执都必须用 plain parseMode（不被 Telegram 当 HTML 解析）", async () => {
-    // 1. 缺 sub
+  // textUSAGE text <text>/<text>/<id>text HTML parseMode
+  // Telegram text 400 text parseMode: "plain"text
+  it("USAGE / text / text plain parseModetext Telegram text HTML text", async () => {
+    // 1. text sub
     await handleRemind([], "", ctx());
-    // 2. 缺 kind
+    // 2. text kind
     await handleRemind(["add"], "", ctx());
-    // 3. 时间格式错（<时间> 走文案分支但不含尖括号；这里只看 USAGE 包含尖括号的 case）
-    // 4. del 缺 id
+    // 3. text<text> text USAGE text casetext
+    // 4. del text id
     await handleRemind(["del"], "", ctx());
 
-    // 所有包含尖括号的文本都必须用 plain
+    // text plain
     for (const s of messenger.sentTexts) {
       if (/[<>]/.test(s.text)) {
-        expect(s.opts?.parseMode, `含尖括号的文案必须 plain：${s.text}`).toBe(
+        expect(s.opts?.parseMode, `text plaintext${s.text}`).toBe(
           "plain",
         );
       }

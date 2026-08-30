@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 
-// F-04：npm audit gate allowlist
-// 仅允许 F-02 已明确 Accepted-Risk 的 undici 传递依赖链。
-// 新增任何未登记 moderate/high/critical vulnerability 都会让 CI 失败。
+// F-04textnpm audit gate allowlist
+// text F-02 text Accepted-Risk text undici text
+// text moderate/high/critical vulnerability text CI text
 
 const ALLOWED_NAMES = new Set(["undici", "@connectrpc/connect-node", "@cursor/sdk"]);
 const ALLOWED_SOURCES = new Set([

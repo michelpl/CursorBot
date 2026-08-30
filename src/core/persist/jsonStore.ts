@@ -3,15 +3,15 @@ import { dirname } from "node:path";
 import { logger } from "../../logger.js";
 
 /**
- * 简易 JSON 持久化存储：
- * - 读取走内存缓存；写入串行化避免竞态。
- * - 写入采用 tmp + rename 原子替换，避免半写文件。
- * - 启动时若发现遗留的 .tmp 文件则清理（视为上次进程崩溃残留）。
+ * text JSON text
+ * - text
+ * - text tmp + rename text
+ * - text .tmp text
  */
 export class JsonStore<T> {
-  // 内存缓存，避免每次 read 都打盘
+  // text read text
   private cache?: T;
-  // 串行化写入：保证多次 write 顺序落盘，不互相覆盖
+  // text write text
   private writing: Promise<void> = Promise.resolve();
 
   constructor(
@@ -55,10 +55,10 @@ export class JsonStore<T> {
     return next;
   }
 
-  // 真正落盘：先写到 .tmp 再 rename，rename 在同一文件系统下是原子的
+  // text .tmp text renametextrename text
   private async flush(value: T): Promise<void> {
-    // F-13：dataDir 含 session/reminder/userId 等隐私数据，目录限定 0700、文件 0600，
-    // 避免多用户主机下被同主机其他账户读取。
+    // F-13textdataDir text session/reminder/userId text 0700text 0600text
+    // text
     await mkdir(dirname(this.filePath), { recursive: true, mode: 0o700 });
     const tmp = `${this.filePath}.tmp`;
     await writeFile(tmp, JSON.stringify(value, null, 2), {
@@ -68,7 +68,7 @@ export class JsonStore<T> {
     await rename(tmp, this.filePath);
   }
 
-  // 启动时清理上次崩溃留下的 .tmp 残留，避免数据被误读
+  // text .tmp text
   private async cleanupTmp(): Promise<void> {
     const tmp = `${this.filePath}.tmp`;
     try {

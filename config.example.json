@@ -17,8 +17,8 @@
   "attachments": { "maxFileSizeBytes": 20971520, "maxAttachmentsPerFlush": 10, "maxRetries": 3 },
   "images": {
     "maxImagesPerPrompt": 8,
-    "defaultPromptSingle": "请分析这张图片",
-    "defaultPromptMulti": "请分析这些图片",
+    "defaultPromptSingle": "text",
+    "defaultPromptMulti": "text",
     "mediaGroupDebounceMs": 800
   },
   "rateLimit": {
