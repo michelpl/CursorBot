@@ -173,7 +173,7 @@ export class AgentOrchestrator {
       input.chatId,
       this.deps.streamOptions,
     );
-    await renderer.start("text thinking...");
+    await renderer.start("Iniciando...");
 
     let run: RuntimeRun;
     try {
@@ -190,6 +190,7 @@ export class AgentOrchestrator {
       return true;
     }
     entry.activeRun = run;
+    renderer.setStatus("Trabalhando...");
 
     try {
       for await (const event of run.stream()) {
@@ -200,21 +201,26 @@ export class AgentOrchestrator {
             await renderer.pushText(event.text);
             break;
           case "thinking":
-            renderer.setStatus("text thinking...");
+            renderer.setStatus("Analisando...");
             break;
           case "tool_call":
             if (event.status === "running") {
-              renderer.setStatus(`text ${summarizeTool(event.name, event.args)}`);
+              const summary = summarizeTool(event.name, event.args);
+              renderer.recordActivity(`⚙️ ${summary}`);
+              renderer.setStatus(`Executando ${summary}`);
             } else if (event.status === "completed") {
-              renderer.setStatus("text thinking...");
+              renderer.recordActivity(`✅ ${event.name} concluído`);
+              renderer.setStatus("Analisando...");
             } else {
-              renderer.setStatus(`text ${event.name} failed`);
+              renderer.recordActivity(`❌ ${event.name} falhou`);
+              renderer.setStatus(`${event.name} falhou`);
             }
             break;
         }
       }
       const r = await run.wait();
       if (r.status === "cancelled") {
+        renderer.recordActivity("⏹ Cancelado");
         await renderer.finalize("\n<i>(text)</i>");
       } else if (r.status === "error") {
         // SDK text result textserver text + Telegram text N text
@@ -225,8 +231,10 @@ export class AgentOrchestrator {
         const tail = r.result
           ? `\ntext Error: ${escapeHtml(r.result.slice(0, 400))}`
           : "\ntext Error";
+        renderer.recordActivity(`❌ Falhou${r.durationMs ? ` após ${formatDuration(r.durationMs)}` : ""}`);
         await renderer.finalize(tail);
       } else {
+        renderer.recordActivity(`✅ Finalizado${r.durationMs ? ` em ${formatDuration(r.durationMs)}` : ""}`);
         await renderer.finalize();
       }
     } finally {
@@ -329,4 +337,12 @@ export class AgentOrchestrator {
     this.pool.set(workspaceId, entry);
     return entry;
   }
+}
+
+function formatDuration(durationMs: number): string {
+  if (durationMs < 1000) return "menos de 1s";
+  const seconds = Math.round(durationMs / 1000);
+  return seconds < 60
+    ? `${seconds}s`
+    : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }

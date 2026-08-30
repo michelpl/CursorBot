@@ -209,6 +209,30 @@ describe("AgentOrchestrator", () => {
       .map((c) => (c.kind === "editText" ? c.text : ""))
       .join("\n");
     expect(allTexts).toContain("shell: ls");
+    expect(allTexts).toContain("Atividade");
+    expect(allTexts).toContain("shell concluído");
+  });
+
+  it("keeps an escaped activity trail visible after the answer", async () => {
+    const { orch, messenger, runtime } = await makeOrchestrator();
+    const p = orch.runPrompt({ chatId: "c1", text: "task", force: false, userId: 0 });
+    const agent = await waitFor(() => runtime.agents[0]);
+    const stub = await waitFor(() => agent.currentRun);
+    stub.setScript([
+      { type: "tool_call", status: "running", name: "shell", args: { command: "echo <unsafe>" } },
+      { type: "assistant", text: "done" },
+      { type: "tool_call", status: "completed", name: "shell" },
+    ]);
+    await p;
+
+    const finalEdit = [...messenger.calls]
+      .reverse()
+      .find((c) => c.kind === "editText");
+    const text = finalEdit && finalEdit.kind === "editText" ? finalEdit.text : "";
+    expect(text).toContain("Cursor iniciado");
+    expect(text).toContain("echo &lt;unsafe&gt;");
+    expect(text).toContain("Finalizado");
+    expect(text).toContain("done");
   });
 });
 

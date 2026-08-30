@@ -29,6 +29,11 @@ export interface StreamRendererOptions {
 export class StreamRenderer {
   private currentMsgId?: string;
   private status: string = "";
+  // Compact timeline of what the Cursor agent is doing.  It is deliberately
+  // kept in the streamed message (rather than sent as separate Telegram
+  // messages) so a long task remains readable and does not flood the chat.
+  private activity: string[] = [];
+  private readonly startedAt = Date.now();
   // textraw markdowntext HTML
   private textBuffer: string = "";
   // finalize text HTML text "(text)" / text markdownToHtml
@@ -45,6 +50,7 @@ export class StreamRenderer {
 
   async start(initialPlaceholder: string): Promise<void> {
     this.status = initialPlaceholder;
+    this.recordActivity("Cursor iniciado");
     const handle = await this.messenger.sendText(this.chatId, this.compose());
     this.currentMsgId = handle.messageId;
   }
@@ -55,11 +61,28 @@ export class StreamRenderer {
     this.scheduleFlush();
   }
 
+  /** Add a user-visible, timestamped Cursor activity entry. */
+  recordActivity(line: string): void {
+    const elapsedSeconds = Math.floor((Date.now() - this.startedAt) / 1000);
+    const elapsed = `${Math.floor(elapsedSeconds / 60)}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
+    // Tool arguments can include arbitrary user text. Escape before this is
+    // rendered with Telegram's HTML parse mode.
+    this.activity.push(`${elapsed}  ${escapeHtmlFallback(line).slice(0, 120)}`);
+    // Preserve the latest context while bounding the size of the Telegram
+    // message and the amount of noise for tool-heavy tasks.
+    if (this.activity.length > 6) this.activity.shift();
+    this.dirty = true;
+    this.scheduleFlush();
+  }
+
   async pushText(chunk: string): Promise<void> {
     // textBuffer text chunk text text texthead text flush + rotatetextrest text
     // maxLen text raw textHTML text
-    if (this.textBuffer.length + chunk.length > this.opts.maxLen) {
-      const remaining = Math.max(0, this.opts.maxLen - this.textBuffer.length);
+    // Reserve room for the activity timeline and HTML expansion. The supplied
+    // maxLen is intentionally below Telegram's 4096-character hard limit.
+    const maxTextLen = Math.max(1, this.opts.maxLen - 600);
+    if (this.textBuffer.length + chunk.length > maxTextLen) {
+      const remaining = Math.max(0, maxTextLen - this.textBuffer.length);
       const head = chunk.slice(0, remaining);
       const rest = chunk.slice(remaining);
       this.textBuffer += head;
@@ -93,7 +116,10 @@ export class StreamRenderer {
   private compose(): string {
     const lines: string[] = [];
     if (this.status) {
-      lines.push(this.status, "");
+      lines.push(`<b>Cursor</b> ${escapeHtmlFallback(this.status)}`, "");
+    }
+    if (this.activity.length > 0) {
+      lines.push("<b>Atividade</b>", this.activity.join("\n"), "");
     }
     if (this.textBuffer) {
       lines.push(this.renderTextBufferSafely());
