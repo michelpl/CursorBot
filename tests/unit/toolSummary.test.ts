@@ -22,7 +22,7 @@ describe("summarizeTool", () => {
     const long = "a".repeat(120);
     const out = summarizeTool("shell", { command: long });
     expect(out.length).toBeLessThanOrEqual("shell: ".length + 60 + 1);
-    expect(out.endsWith("text")).toBe(true);
+    expect(out.endsWith("…")).toBe(true);
   });
 
   it("text text text name", () => {

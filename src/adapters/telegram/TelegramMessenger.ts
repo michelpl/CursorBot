@@ -1,37 +1,28 @@
-import { InputFile } from "grammy";
+import { InputFile, InlineKeyboard } from "grammy";
 import { createBot, type GrammyBot } from "./grammyClient.js";
 import { ImageGroupBuffer } from "./ImageGroupBuffer.js";
 import { downloadTelegramFile } from "./downloadFile.js";
-import type { IMessenger } from "../../core/messenger/IMessenger.js";
 import type {
   IncomingTextMessage,
   IncomingImageMessage,
   IncomingImageGroup,
+  IncomingCallbackQuery,
   MessageHandle,
   ImagePayload,
   FilePayload,
   SendOptions,
 } from "../../core/messenger/types.js";
+import type { IMessenger, InteractiveMessage } from "../../core/messenger/IMessenger.js";
 import { logger } from "../../logger.js";
 
 export interface TelegramMessengerConfig {
   botToken: string;
   parseMode: "HTML" | "Markdown" | "plain";
-  // text emit text
   allowedUserIds?: number[];
-  // M2: text debounce text albumtext
   mediaGroupDebounceMs?: number;
-  // F-05: textfile_size text / content-length / text
   maxFileSizeBytes: number;
 }
 
-// ImageGroupBuffer text photo text
-// textdata text Promise<string>text grammy text update text push text updatetext
-// textflush text await text promise text emittext
-//
-// textgrammy text `bot.on("message:photo", async (ctx) => {...})` text async handlertext
-// text handler text update text handler text await text ~1stext
-// album text 3 text push text 1-2stext debounce 200mstext buffer text 3 text grouptext
 interface PendingPhoto {
   dataPromise: Promise<string>;
   mimeType: string;
@@ -41,18 +32,13 @@ interface PendingPhoto {
   username?: string;
 }
 
-/**
- * grammy text IMessengertext
- * - long-pollingtextbot.start() text
- * - textM2text ImageGroupBuffer text media_group_id text imageGroup text
- *   text image text listener text emittext imageGrouptext
- * - editText textTelegram text"text"text
- */
+/** Grammy-based IMessenger with inline keyboard support for ACP interactions. */
 export class TelegramMessenger implements IMessenger {
   private bot?: GrammyBot;
   private textListeners: Array<(m: IncomingTextMessage) => void> = [];
   private imageListeners: Array<(m: IncomingImageMessage) => void> = [];
   private imageGroupListeners: Array<(m: IncomingImageGroup) => void> = [];
+  private callbackListeners: Array<(m: IncomingCallbackQuery) => void> = [];
   private buffer?: ImageGroupBuffer<PendingPhoto>;
 
   constructor(private readonly cfg: TelegramMessengerConfig) {}
@@ -61,17 +47,13 @@ export class TelegramMessenger implements IMessenger {
     const bot = createBot(this.cfg.botToken);
     this.bot = bot;
 
-    // M2: text ImageGroupBuffer text media_group_id text emit
     this.buffer = new ImageGroupBuffer<PendingPhoto>(
       this.cfg.mediaGroupDebounceMs ?? 200,
       (items) => {
         if (items.length === 0) return;
-        // fire text fire-and-forgettext
-        // await text dataPromise text imageGroup listenerstext
         void (async () => {
           try {
             const datas = await Promise.all(items.map((i) => i.dataPromise));
-            // text chatId / userId text"text"textcaption text
             const first = items[0]!;
             const caption = items.map((i) => i.caption).find((c) => !!c);
             const group: IncomingImageGroup = {
@@ -86,10 +68,7 @@ export class TelegramMessenger implements IMessenger {
             };
             for (const l of this.imageGroupListeners) l(group);
           } catch (e) {
-            logger.error(
-              { err: (e as Error).message },
-              "imageGroup text",
-            );
+            logger.error({ err: (e as Error).message }, "imageGroup flush failed");
           }
         })();
       },
@@ -98,10 +77,7 @@ export class TelegramMessenger implements IMessenger {
     bot.on("message:text", (ctx) => {
       const userId = ctx.from?.id;
       if (userId === undefined) return;
-      if (
-        this.cfg.allowedUserIds &&
-        !this.cfg.allowedUserIds.includes(userId)
-      ) {
+      if (this.cfg.allowedUserIds && !this.cfg.allowedUserIds.includes(userId)) {
         return;
       }
       const chatId = String(ctx.chat.id);
@@ -111,17 +87,27 @@ export class TelegramMessenger implements IMessenger {
       }
     });
 
-    // texthandler text**text await** getFile / fetchtext
-    // textgrammy text dispatch async handlertext await text update text pushtext
-    // text album text push text 1-2s text debounce text 200ms text buffer text
-    // text handler text dataPromise text
+    bot.on("callback_query:data", (ctx) => {
+      const userId = ctx.from?.id;
+      if (userId === undefined) return;
+      if (this.cfg.allowedUserIds && !this.cfg.allowedUserIds.includes(userId)) {
+        return;
+      }
+      const chatId = String(ctx.callbackQuery.message?.chat.id ?? ctx.chat?.id);
+      if (!chatId) return;
+      const msg: IncomingCallbackQuery = {
+        chatId,
+        userId,
+        callbackQueryId: ctx.callbackQuery.id,
+        data: ctx.callbackQuery.data,
+      };
+      for (const l of this.callbackListeners) l(msg);
+    });
+
     bot.on("message:photo", (ctx) => {
       const userId = ctx.from?.id;
       if (userId === undefined) return;
-      if (
-        this.cfg.allowedUserIds &&
-        !this.cfg.allowedUserIds.includes(userId)
-      ) {
+      if (this.cfg.allowedUserIds && !this.cfg.allowedUserIds.includes(userId)) {
         return;
       }
       const chatId = String(ctx.chat.id);
@@ -137,12 +123,7 @@ export class TelegramMessenger implements IMessenger {
         botToken: this.cfg.botToken,
         maxFileSizeBytes: this.cfg.maxFileSizeBytes,
       });
-      // textpromise text"text await"text item text push text buffertext
-      // text catch text unhandledRejection text node text
-      // text buffer flush text Promise.all text
-      dataPromise.catch(() => {
-        /* text flush text try/catch text */
-      });
+      dataPromise.catch(() => {});
       const item: PendingPhoto = {
         dataPromise,
         mimeType: "image/jpeg",
@@ -154,9 +135,8 @@ export class TelegramMessenger implements IMessenger {
       this.buffer?.push(groupId, item);
     });
 
-    // bot.start text long-polling text awaittext
     bot.start({ drop_pending_updates: true }).catch((e) => {
-      logger.error({ err: (e as Error).message }, "grammy text");
+      logger.error({ err: (e as Error).message }, "grammy start failed");
     });
   }
 
@@ -172,16 +152,19 @@ export class TelegramMessenger implements IMessenger {
   on(event: "text", h: (m: IncomingTextMessage) => void): void;
   on(event: "image", h: (m: IncomingImageMessage) => void): void;
   on(event: "imageGroup", h: (m: IncomingImageGroup) => void): void;
+  on(event: "callback_query", h: (m: IncomingCallbackQuery) => void): void;
   on(
-    event: "text" | "image" | "imageGroup",
+    event: "text" | "image" | "imageGroup" | "callback_query",
     h: (m: never) => void,
   ): void {
     if (event === "text") {
       this.textListeners.push(h as (m: IncomingTextMessage) => void);
     } else if (event === "image") {
       this.imageListeners.push(h as (m: IncomingImageMessage) => void);
-    } else {
+    } else if (event === "imageGroup") {
       this.imageGroupListeners.push(h as (m: IncomingImageGroup) => void);
+    } else {
+      this.callbackListeners.push(h as (m: IncomingCallbackQuery) => void);
     }
   }
 
@@ -197,6 +180,26 @@ export class TelegramMessenger implements IMessenger {
         : undefined,
     });
     return { messageId: String(r.message_id) };
+  }
+
+  async sendInteractiveMessage(
+    chatId: string,
+    msg: InteractiveMessage,
+  ): Promise<MessageHandle> {
+    const keyboard = new InlineKeyboard();
+    for (const btn of msg.buttons) {
+      keyboard.text(btn.label, btn.id);
+      keyboard.row();
+    }
+    const r = await this.requireBot().api.sendMessage(Number(chatId), msg.text, {
+      parse_mode: this.toParseMode(msg.parseMode ?? this.cfg.parseMode),
+      reply_markup: keyboard,
+    });
+    return { messageId: String(r.message_id) };
+  }
+
+  async answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
+    await this.requireBot().api.answerCallbackQuery(callbackQueryId, { text });
   }
 
   async editText(
@@ -216,7 +219,6 @@ export class TelegramMessenger implements IMessenger {
       );
     } catch (e) {
       const msg = (e as Error).message ?? "";
-      // Telegram text 400text
       if (msg.includes("message is not modified")) return;
       throw e;
     }
@@ -253,7 +255,7 @@ export class TelegramMessenger implements IMessenger {
   }
 
   private requireBot(): GrammyBot {
-    if (!this.bot) throw new Error("TelegramMessenger text");
+    if (!this.bot) throw new Error("TelegramMessenger não iniciado");
     return this.bot;
   }
 

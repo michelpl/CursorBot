@@ -139,7 +139,7 @@ describe("ReminderScheduler", () => {
     await scheduler.waitIdle();
     // textsendText text + at text
     expect(sendText).toHaveBeenCalledTimes(1);
-    expect(sendText.mock.calls[0]![1] as string).toMatch(/text 1 text/);
+    expect(sendText.mock.calls[0]![1] as string).toMatch(/1 min/i);
     expect(store.list()[0]!.at).toBe(NOW + 1000 + 60_000);
     // 60s text
     await vi.advanceTimersByTimeAsync(60_000);

@@ -168,7 +168,7 @@ export class ReminderScheduler {
       try {
         await this.deps.sendText(
           r.chatId,
-          `text text 1 textagent text${r.prompt.slice(0, 60)}`,
+          `Agente ocupado — lembrete reagendado em 1 min: ${r.prompt.slice(0, 60)}`,
         );
       } catch (e) {
         logger.error(

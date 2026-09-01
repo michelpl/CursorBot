@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// Analyze this image schemaAnalyze these images JSON text + text
-// text undefinedtext
 export const ConfigSchema = z.object({
   telegram: z.object({
     botToken: z.string().min(1),
@@ -10,32 +8,13 @@ export const ConfigSchema = z.object({
   }),
   cursor: z.object({
     apiKey: z.string().min(1),
-    defaultModel: z
-      .object({
-        // Cursor SDK text"text"text id text "default"text "auto"text ConfigurationError text
-        id: z.string().default("default"),
-        params: z
-          .array(z.object({ id: z.string(), value: z.string() }))
-          .default([]),
-      })
-      .default({ id: "default", params: [] }),
-    settingSources: z
-      .array(z.enum(["project", "user", "team", "mdm", "plugins", "all"]))
-      .default(["project", "user"]),
-    // F-10text Cursor SDK textCWE-269 text
-    // text ~/.cursor/sandbox.json text <workspace>/.cursor/sandbox.json text
-    //   - type: "workspace_readwrite"text/ "workspace_readonly" / "insecure_none"
-    //   - networkPolicy: text/text SSRF / cloud metadatatext
-    //   - additionalReadonlyPaths / additionalReadwritePaths
-    // text npm install / text config.json text falsetext
-    sandboxOptions: z
-      .object({ enabled: z.boolean().default(true) })
-      .default({ enabled: true }),
+    agentCliPath: z.string().default("agent"),
+    acpMode: z.enum(["agent", "plan", "ask"]).default("agent"),
+    interactionTimeoutMs: z.number().int().min(30_000).max(3_600_000).default(300_000),
   }),
   workspaces: z
     .object({
       autoRegisterCwd: z.boolean().default(true),
-      // F-07text/ws add text cwd + text workspace text
       allowedRoots: z.array(z.string()).default([]),
     })
     .default({ autoRegisterCwd: true, allowedRoots: [] }),
@@ -46,14 +25,12 @@ export const ConfigSchema = z.object({
   logging: z
     .object({ level: z.enum(["debug", "info", "warn", "error"]).default("info") })
     .default({ level: "info" }),
-  // M2text + text
   reminders: z
     .object({
-      timezone: z.string().default("Asia/Shanghai"),
+      timezone: z.string().default("America/Sao_Paulo"),
       maxAheadDays: z.number().int().min(1).max(365).default(30),
     })
-    .default({ timezone: "Asia/Shanghai", maxAheadDays: 30 }),
-  // M2text
+    .default({ timezone: "America/Sao_Paulo", maxAheadDays: 30 }),
   attachments: z
     .object({
       maxFileSizeBytes: z
@@ -70,26 +47,23 @@ export const ConfigSchema = z.object({
       maxAttachmentsPerFlush: 10,
       maxRetries: 3,
     }),
-  // M2text prompttextmedia_group debouncetext
   images: z
     .object({
       maxImagesPerPrompt: z.number().int().min(1).max(16).default(8),
-      defaultPromptSingle: z.string().default("text"),
-      defaultPromptMulti: z.string().default("text"),
-      // 800ms textgrammy text update text 50-200mstext 300-500ms text
-      // 200ms textspec text"text album"text800ms text
+      defaultPromptSingle: z
+        .string()
+        .default("Analise esta imagem e descreva o que você vê."),
+      defaultPromptMulti: z
+        .string()
+        .default("Analise estas imagens e descreva o que você vê."),
       mediaGroupDebounceMs: z.number().int().min(50).max(2000).default(800),
     })
     .default({
       maxImagesPerPrompt: 8,
-      defaultPromptSingle: "text",
-      defaultPromptMulti: "text",
+      defaultPromptSingle: "Analise esta imagem e descreva o que você vê.",
+      defaultPromptMulti: "Analise estas imagens e descreva o que você vê.",
       mediaGroupDebounceMs: 800,
     }),
-  // F-06text captext config.json
-  // - messagetext messenger text owner text + text
-  // - agentCreatetextcached miss text Agent.create / resume textcached text
-  // - reminderstext reminder text /remind add text
   rateLimit: z
     .object({
       message: z
@@ -98,7 +72,7 @@ export const ConfigSchema = z.object({
           refillPerSec: z.number().min(0.1).default(2),
         })
         .default({ capacity: 4, refillPerSec: 2 }),
-      agentCreate: z
+      sessionCreate: z
         .object({
           capacity: z.number().int().min(1).default(10),
           refillPerSec: z.number().min(0.01).default(10 / 60),
@@ -110,14 +84,13 @@ export const ConfigSchema = z.object({
     })
     .default({
       message: { capacity: 4, refillPerSec: 2 },
-      agentCreate: { capacity: 10, refillPerSec: 10 / 60 },
+      sessionCreate: { capacity: 10, refillPerSec: 10 / 60 },
       reminders: { maxPerUser: 100 },
     }),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
 
-// text
 export class ConfigError extends Error {
   constructor(msg: string) {
     super(msg);

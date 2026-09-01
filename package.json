@@ -1,22 +1,14 @@
 {
   "name": "cursorbot",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
-  "description": "Telegram <-> Cursor SDK bridge text drive Cursor agents on your local repos from your phone.",
+  "description": "Telegram ↔ Cursor ACP bridge — drive Cursor agents on your local repos from your phone.",
   "type": "module",
   "license": "MIT",
-  "author": "Jem Li",
-  "homepage": "https://github.com/michelpl/CursorBot#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/michelpl/CursorBot.git"
-  },
-  "bugs": {
-    "url": "https://github.com/michelpl/CursorBot/issues"
-  },
+  "author": "Michel Lima",
   "keywords": [
     "cursor",
-    "cursor-sdk",
+    "cursor-acp",
     "telegram",
     "telegram-bot",
     "agent",
@@ -24,7 +16,6 @@
     "automation",
     "personal-assistant",
     "remote-coding",
-    "wechat",
     "messenger",
     "grammy"
   ],
@@ -48,7 +39,6 @@
     "audit:security": "node scripts/audit-security.mjs"
   },
   "dependencies": {
-    "@cursor/sdk": "^1.0.12",
     "commander": "^14.0.3",
     "dayjs": "^1.11.20",
     "grammy": "^1.42.0",
@@ -71,14 +61,5 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
-  },
-  "//security_overrides": "F-03 text install-time text advisory texttar 7.5.11+ / node-gyp 10.3.1+ / cacache 18 / make-fetch-happen 13 / http-proxy-agent 7 / @tootallnate/once 2textundici textF-02 text Accepted-Risktext @cursor/sdk text @connectrpc/connect-node text",
-  "overrides": {
-    "tar": "^7.5.11",
-    "cacache": "^18.0.4",
-    "make-fetch-happen": "^13.0.1",
-    "node-gyp": "^10.3.1",
-    "http-proxy-agent": "^7.0.2",
-    "@tootallnate/once": "npm:@tootallnate/once@2.0.0"
   }
 }

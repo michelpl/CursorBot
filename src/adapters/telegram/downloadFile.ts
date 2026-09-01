@@ -29,11 +29,11 @@ export async function downloadTelegramFile(
   const file = await api.getFile(fileId);
   if (file.file_size && file.file_size > maxFileSizeBytes) {
     throw new Error(
-      `file_size ${file.file_size} text ${maxFileSizeBytes}textfile_id=${fileId}text`,
+      `Arquivo muito grande: ${file.file_size} > ${maxFileSizeBytes} (file_id=${fileId})`,
     );
   }
   if (!file.file_path) {
-    throw new Error(`file_path textfile_id=${fileId}text`);
+    throw new Error(`file_path ausente (file_id=${fileId})`);
   }
 
   const url = `https://api.telegram.org/file/bot${botToken}/${file.file_path}`;
@@ -43,7 +43,7 @@ export async function downloadTelegramFile(
     res = await fetch(url);
   } catch {
     // F-01textfetch text url/token text message text
-    throw new Error(`Telegram text (file_id=${fileId})`);
+    throw new Error(`Falha ao baixar arquivo do Telegram (file_id=${fileId})`);
   }
 
   // text 2 textcontent-length text
@@ -56,12 +56,12 @@ export async function downloadTelegramFile(
       /* ignore */
     }
     throw new Error(
-      `content-length ${cl} text ${maxFileSizeBytes}textfile_id=${fileId}text`,
+      `content-length ${cl} excede ${maxFileSizeBytes} (file_id=${fileId})`,
     );
   }
 
   if (!res.body) {
-    throw new Error(`text (file_id=${fileId})`);
+    throw new Error(`Corpo vazio (file_id=${fileId})`);
   }
 
   // text 3 text Buffertext server text
@@ -81,7 +81,7 @@ export async function downloadTelegramFile(
           /* ignore */
         }
         throw new Error(
-          `text size ${total} text ${maxFileSizeBytes}textfile_id=${fileId}text`,
+          `Tamanho ${total} excede ${maxFileSizeBytes} (file_id=${fileId})`,
         );
       }
       chunks.push(value);

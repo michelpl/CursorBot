@@ -1,11 +1,14 @@
 import { JsonStore } from "../persist/jsonStore.js";
 import { z } from "zod";
 
-// text agentId text Agent.resume() text
+/** ACP session id for session/load on resume. */
 export interface SessionEntry {
-  agentId?: string;
-  model?: string;
-  modelParams?: Array<{ id: string; value: string }>;
+  sessionId?: string;
+}
+
+/** Pre-ACP Cursor SDK agent ids (agent-{uuid}) — invalid for ACP session/load. */
+export function isLegacySdkAgentId(id: string): boolean {
+  return /^agent-[0-9a-f-]{36}$/i.test(id);
 }
 
 interface SessionFile {
@@ -13,6 +16,8 @@ interface SessionFile {
 }
 
 const SessionEntrySchema = z.object({
+  sessionId: z.string().optional(),
+  // Legacy field — ignored on read, stripped on write
   agentId: z.string().optional(),
   model: z.string().optional(),
   modelParams: z
@@ -25,10 +30,7 @@ const SessionFileSchema = z.object({
 });
 
 /**
- * text workspace name text SessionEntrytext
- *
- * - text set / clear text flushtext
- * - JsonStore text set text
+ * Persists ACP session ids per workspace name.
  */
 export class SessionStore {
   private readonly store: JsonStore<SessionFile>;
@@ -44,14 +46,35 @@ export class SessionStore {
 
   async init(): Promise<void> {
     this.state = await this.store.readOrInit();
+    let dirty = false;
+    for (const [wsId, entry] of Object.entries(this.state.workspaces)) {
+      const legacy = entry as SessionEntry & { agentId?: string };
+      if (
+        !entry.sessionId &&
+        legacy.agentId &&
+        isLegacySdkAgentId(legacy.agentId)
+      ) {
+        delete this.state.workspaces[wsId];
+        dirty = true;
+      }
+    }
+    if (dirty) await this.store.write(this.state);
   }
 
   get(workspaceId: string): SessionEntry | undefined {
-    return this.state.workspaces[workspaceId];
+    const entry = this.state.workspaces[workspaceId];
+    if (!entry) return undefined;
+    // Migrate non-SDK legacy agentId → sessionId if present
+    const legacy = entry as SessionEntry & { agentId?: string };
+    if (!entry.sessionId && legacy.agentId) {
+      if (isLegacySdkAgentId(legacy.agentId)) return undefined;
+      return { sessionId: legacy.agentId };
+    }
+    return { sessionId: entry.sessionId };
   }
 
   async set(workspaceId: string, entry: SessionEntry): Promise<void> {
-    this.state.workspaces[workspaceId] = entry;
+    this.state.workspaces[workspaceId] = { sessionId: entry.sessionId };
     await this.store.write(this.state);
   }
 

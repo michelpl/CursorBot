@@ -3,7 +3,7 @@ const MAX_LEN = 60;
 
 function trim(s: string): string {
   if (s.length <= MAX_LEN) return s;
-  return s.slice(0, MAX_LEN) + "text";
+  return s.slice(0, MAX_LEN) + "…";
 }
 
 function pickPath(a: Record<string, unknown> | undefined): string {

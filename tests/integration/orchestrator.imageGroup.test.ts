@@ -9,6 +9,9 @@ import { AttachmentQueue } from "../../src/core/attachments/AttachmentQueue.js";
 import { AttachmentDispatcher } from "../../src/core/attachments/AttachmentDispatcher.js";
 import { StubMessenger } from "../helpers/StubMessenger.js";
 import { StubAgentRuntime } from "../helpers/StubAgent.js";
+import { makeInteractionStore } from "../helpers/makeInteractionStore.js";
+import { makeApprovedPlanStore } from "../helpers/makeApprovedPlanStore.js";
+import type { ApprovedPlanStore } from "../../src/core/plans/ApprovedPlanStore.js";
 
 // text
 async function waitFor<T>(fn: () => T | undefined, retries = 200): Promise<T> {
@@ -27,6 +30,7 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
   let session: SessionStore;
   let runtime: StubAgentRuntime;
   let orch: AgentOrchestrator;
+  let approvedPlanStore: ApprovedPlanStore;
 
   beforeEach(async () => {
     dataDir = await mkdtemp(join(tmpdir(), "ig-orch-"));
@@ -36,13 +40,17 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
     session = new SessionStore(join(dataDir, "sess.json"));
     await session.init();
     runtime = new StubAgentRuntime();
+    const interactionStore = await makeInteractionStore();
+    ({ store: approvedPlanStore } = await makeApprovedPlanStore(dataDir));
     orch = new AgentOrchestrator({
       messenger,
       runtime,
       registry,
       session,
       streamOptions: { throttleMs: 1, maxLen: 1000 },
-      defaultModel: { id: "default", params: [] },
+      acpMode: "agent",
+      interactionStore,
+      approvedPlanStore,
     });
   });
 
@@ -116,14 +124,17 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
       maxPerFlush: 10,
       pendingRoot: pendingDir,
     });
+    const interactionStore2 = await makeInteractionStore();
     const orch2 = new AgentOrchestrator({
       messenger,
       runtime,
       registry,
       session,
       streamOptions: { throttleMs: 1, maxLen: 1000 },
-      defaultModel: { id: "default", params: [] },
+      acpMode: "agent",
+      interactionStore: interactionStore2,
       attachmentDispatcher: dispatcher,
+      approvedPlanStore,
     });
     const p = orch2.runPrompt({ chatId: "1", text: "hi", force: false, userId: 0 });
     const agent = await waitFor(() => runtime.agents[0]);
@@ -145,7 +156,7 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
       });
       expect(r.delivered).toBe(true);
       expect(
-        messenger.sentTexts.some((t) => t.text.includes("text")),
+        messenger.sentTexts.some((t) => t.text.includes("Lembrete")),
       ).toBe(true);
     });
 
@@ -172,13 +183,17 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
     await empty.init({ autoRegisterCwd: false, cwd: dataDir });
     const messenger2 = new StubMessenger();
     const runtime2 = new StubAgentRuntime();
+    const interactionStore3 = await makeInteractionStore();
+    const { store: planStore2 } = await makeApprovedPlanStore(dataDir);
     const orch2 = new AgentOrchestrator({
       messenger: messenger2,
       runtime: runtime2,
       registry: empty,
       session,
       streamOptions: { throttleMs: 1, maxLen: 1000 },
-      defaultModel: { id: "default", params: [] },
+      acpMode: "agent",
+      interactionStore: interactionStore3,
+      approvedPlanStore: planStore2,
     });
     await orch2.runPromptWithImages({
       chatId: "1",
@@ -189,7 +204,7 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
     });
     expect(runtime2.agents.length).toBe(0);
     expect(
-      messenger2.sentTexts.some((m) => m.text.includes("text")),
+      messenger2.sentTexts.some((m) => m.text.includes("workspace")),
     ).toBe(true);
     await orch2.dispose();
   });

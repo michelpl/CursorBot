@@ -127,7 +127,7 @@ export class StreamRenderer {
     if (this.finalizeExtra) {
       lines.push(this.finalizeExtra);
     }
-    if (lines.length === 0) lines.push("text");
+    if (lines.length === 0) lines.push("…");
     return lines.join("\n");
   }
 

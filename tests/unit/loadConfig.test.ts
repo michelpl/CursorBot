@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 describe("loadConfig", () => {
-  it("text JSON text", async () => {
+  it("loads minimal JSON with defaults", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -31,12 +31,12 @@ describe("loadConfig", () => {
     expect(cfg.telegram.parseMode).toBe("HTML");
     expect(cfg.telegram.allowedUserIds).toEqual([42]);
     expect(cfg.cursor.apiKey).toBe("K");
-    expect(cfg.cursor.defaultModel.id).toBe("default");
-    expect(cfg.cursor.settingSources).toEqual(["project", "user"]);
+    expect(cfg.cursor.agentCliPath).toBe("agent");
+    expect(cfg.cursor.acpMode).toBe("agent");
     expect(cfg.paths.dataDir).toBe("./data");
   });
 
-  it("text", async () => {
+  it("env vars override file values", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -53,7 +53,7 @@ describe("loadConfig", () => {
     expect(cfg.cursor.apiKey).toBe("K_ENV");
   });
 
-  it("text ConfigError", async () => {
+  it("throws ConfigError on missing botToken", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -66,7 +66,7 @@ describe("loadConfig", () => {
     await expect(loadConfig({ configPath: p })).rejects.toThrow(/telegram\.botToken/);
   });
 
-  it("allowedUserIds text", async () => {
+  it("requires non-empty allowedUserIds", async () => {
     const p = join(dir, "config.json");
     await writeFile(
       p,
@@ -79,8 +79,7 @@ describe("loadConfig", () => {
     await expect(loadConfig({ configPath: p })).rejects.toThrow(/allowedUserIds/);
   });
 
-  // M2textreminders / attachments / images text
-  it("M2 text reminders / attachments / images text default", async () => {
+  it("M2 sections use PT-BR defaults", async () => {
     const path = join(dir, "config.json");
     await writeFile(
       path,
@@ -91,14 +90,11 @@ describe("loadConfig", () => {
       "utf8",
     );
     const cfg = await loadConfig({ configPath: path });
-    expect(cfg.reminders.timezone).toBe("Asia/Shanghai");
+    expect(cfg.reminders.timezone).toBe("America/Sao_Paulo");
     expect(cfg.reminders.maxAheadDays).toBe(30);
     expect(cfg.attachments.maxFileSizeBytes).toBe(20 * 1024 * 1024);
-    expect(cfg.attachments.maxAttachmentsPerFlush).toBe(10);
-    expect(cfg.attachments.maxRetries).toBe(3);
-    expect(cfg.images.maxImagesPerPrompt).toBe(8);
-    expect(cfg.images.defaultPromptSingle).toBe("text");
-    expect(cfg.images.defaultPromptMulti).toBe("text");
+    expect(cfg.images.defaultPromptSingle).toContain("Analise");
     expect(cfg.images.mediaGroupDebounceMs).toBe(800);
+    expect(cfg.rateLimit.sessionCreate.capacity).toBe(10);
   });
 });

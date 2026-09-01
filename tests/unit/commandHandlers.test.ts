@@ -8,6 +8,8 @@ import { WorkspaceRegistry } from "../../src/core/workspace/WorkspaceRegistry.js
 import { SessionStore } from "../../src/core/session/SessionStore.js";
 import { AgentOrchestrator } from "../../src/core/orchestrator/AgentOrchestrator.js";
 import { dispatchCommand } from "../../src/commands/dispatch.js";
+import { makeInteractionStore } from "../helpers/makeInteractionStore.js";
+import { makeApprovedPlanStore } from "../helpers/makeApprovedPlanStore.js";
 
 let dir: string;
 afterEach(async () => {
@@ -22,13 +24,17 @@ async function setup() {
   await session.init();
   const messenger = new StubMessenger();
   const runtime = new StubAgentRuntime();
+  const interactionStore = await makeInteractionStore();
+  const { store: approvedPlanStore } = await makeApprovedPlanStore(dir);
   const orch = new AgentOrchestrator({
     messenger,
     runtime,
     registry,
     session,
     streamOptions: { throttleMs: 5, maxLen: 1000 },
-    defaultModel: { id: "auto", params: [] },
+    acpMode: "agent",
+    interactionStore,
+    approvedPlanStore,
   });
   return { messenger, registry, session, orch, runtime };
 }
@@ -39,7 +45,7 @@ function lastSent(messenger: StubMessenger): string {
 }
 
 describe("dispatchCommand", () => {
-  it("/help text text", async () => {
+  it("/help returns command list", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "help", args: [], rest: "" },
@@ -48,7 +54,7 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toContain("/start");
   });
 
-  it("/ws list text default", async () => {
+  it("/ws list includes default workspace", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "ws", args: ["list"], rest: "list" },
@@ -57,7 +63,7 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toContain("default");
   });
 
-  it("/ws add name path text text", async () => {
+  it("/ws add registers workspace", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       {
@@ -71,7 +77,7 @@ describe("dispatchCommand", () => {
     expect(registry.get("alpha")?.path).toBe(dir);
   });
 
-  it("/ws use ghost text text not foundtext", async () => {
+  it("/ws use ghost returns not found", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "ws", args: ["use", "ghost"], rest: "use ghost" },
@@ -80,28 +86,28 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toMatch(/not found/i);
   });
 
-  it("/reset text session text default text agentId", async () => {
+  it("/reset clears session for default workspace", async () => {
     const { messenger, registry, session, orch } = await setup();
-    await session.set("default", { agentId: "agent-x" });
+    await session.set("default", { sessionId: "session-x" });
     await dispatchCommand(
       { type: "command", name: "reset", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(session.get("default")?.agentId).toBeUndefined();
+    expect(session.get("default")?.sessionId).toBeUndefined();
   });
 
-  it("/cancel text run text", async () => {
+  it("/cancel acknowledges cancellation", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "cancel", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(lastSent(messenger)).toMatch(/text/);
+    expect(lastSent(messenger)).toMatch(/cancelamento/i);
   });
 
-  it("/status text", async () => {
+  it("/status shows workspace name", async () => {
     const { messenger, registry, session, orch } = await setup();
-    await session.set("default", { agentId: "agent-y", model: "auto" });
+    await session.set("default", { sessionId: "session-y" });
     await dispatchCommand(
       { type: "command", name: "status", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
@@ -109,21 +115,21 @@ describe("dispatchCommand", () => {
     expect(lastSent(messenger)).toContain("default");
   });
 
-  it("/model composer-2 text session", async () => {
+  it("/model is documented no-op with ACP", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "model", args: ["composer-2"], rest: "composer-2" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(session.get("default")?.model).toBe("composer-2");
+    expect(lastSent(messenger)).toMatch(/ACP/i);
   });
 
-  it("text text text", async () => {
+  it("unknown command hints /help", async () => {
     const { messenger, registry, session, orch } = await setup();
     await dispatchCommand(
       { type: "command", name: "nonexistent", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(lastSent(messenger)).toMatch(/text|Unknown/);
+    expect(lastSent(messenger)).toMatch(/desconhecido|help/i);
   });
 });

@@ -1,7 +1,6 @@
 import type { CommandContext } from "../dispatch.js";
 
-// /model <id> text default modeltext sessionStoretext
-// text agent text /resettext
+/** ACP uses Cursor CLI model selection; /model is a documented no-op. */
 export async function handleModel(
   args: string[],
   ctx: CommandContext,
@@ -10,21 +9,19 @@ export async function handleModel(
   if (!id) {
     await ctx.messenger.sendText(
       ctx.chatId,
-      "text/model <id>text /model auto",
+      "Com ACP, o modelo é definido pelo Cursor CLI.\nUso legado: /model <id> (sem efeito).",
       { parseMode: "plain" },
     );
     return;
   }
   const w = ctx.registry.getActive();
   if (!w) {
-    await ctx.messenger.sendText(ctx.chatId, "text");
+    await ctx.messenger.sendText(ctx.chatId, "Nenhum workspace ativo.");
     return;
   }
-  const s = ctx.session.get(w.name) ?? {};
-  await ctx.session.set(w.name, { ...s, model: id });
   await ctx.messenger.sendText(
     ctx.chatId,
-    `text <code>${id}</code>text agent text /resettext`,
+    `Com ACP, <code>${id}</code> não altera o modelo em runtime. Configure no Cursor CLI.`,
     { parseMode: "HTML" },
   );
 }

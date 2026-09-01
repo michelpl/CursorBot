@@ -1,11 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { AgentOrchestrator } from "../../src/core/orchestrator/AgentOrchestrator.js";
 import { RateLimiter } from "../../src/core/rateLimit/RateLimiter.js";
+import { PendingInteractionStore } from "../../src/core/interactions/PendingInteractionStore.js";
+import { ApprovedPlanStore } from "../../src/core/plans/ApprovedPlanStore.js";
 import type { OrchestratorDeps } from "../../src/core/orchestrator/AgentOrchestrator.js";
-
-// F-06 PR dtextagent.create text
-// - cached miss text create text cached text
-// - text RateLimitedErrortext runInternal catch text
 
 function makeFakeRuntime() {
   const created: string[] = [];
@@ -14,13 +12,17 @@ function makeFakeRuntime() {
     create: vi.fn(async (opts: { cwd: string }) => {
       created.push(opts.cwd);
       return {
-        agentId: `a-${created.length}`,
+        sessionId: `s-${created.length}`,
         send: vi.fn(async () => ({
           stream: async function* () {},
           wait: async () => ({ status: "finished" as const, durationMs: 0 }),
           cancel: async () => {},
+          respond: async () => {},
         })),
         dispose: vi.fn(async () => {}),
+        setMode: vi.fn(async () => {}),
+        getMode: vi.fn(() => "agent"),
+        getAvailableModes: vi.fn(() => []),
       };
     }),
     resume: vi.fn(),
@@ -39,6 +41,8 @@ function makeFakeMessenger() {
     sendDocument: vi.fn(async () => {}),
     sendImage: vi.fn(async () => ({ messageId: "img-1" })),
     sendTyping: vi.fn(async () => {}),
+    sendInteractiveMessage: vi.fn(async () => ({ messageId: "i-1" })),
+    answerCallbackQuery: vi.fn(async () => {}),
   };
 }
 
@@ -50,18 +54,25 @@ function makeFakeSession() {
   };
 }
 
-describe("AgentOrchestrator agent.create text", () => {
-  it("capacity=2 text 3 text cwd text RateLimitedError text finalize text", async () => {
+describe("AgentOrchestrator sessionCreate rate limit", () => {
+  it("capacity=2 allows 2 creates then rate-limits", async () => {
     const runtime = makeFakeRuntime();
     const messenger = makeFakeMessenger();
     let activeWs: { name: string; path: string } = { name: "ws1", path: "/tmp/ws1" };
     const registry = { getActive: () => activeWs };
+    const interactionStore = new PendingInteractionStore({ timeoutMs: 60_000 });
+    await interactionStore.init();
 
     const limiter = new RateLimiter({
-      // text retryAfterMs text Infinitytext
-      buckets: { agentCreate: { capacity: 2, refillPerSec: 0.0001 } },
+      buckets: { sessionCreate: { capacity: 2, refillPerSec: 0.0001 } },
       now: () => 0,
     });
+
+    const approvedPlanStore = {
+      get: () => undefined,
+      set: vi.fn(async () => {}),
+      clear: vi.fn(async () => {}),
+    } as unknown as ApprovedPlanStore;
 
     const deps: Partial<OrchestratorDeps> = {
       messenger: messenger as unknown as OrchestratorDeps["messenger"],
@@ -69,8 +80,10 @@ describe("AgentOrchestrator agent.create text", () => {
       registry: registry as unknown as OrchestratorDeps["registry"],
       session: makeFakeSession() as unknown as OrchestratorDeps["session"],
       streamOptions: { throttleMs: 0, maxLen: 1000 },
-      defaultModel: { id: "default", params: [] },
+      acpMode: "agent",
       rateLimiter: limiter,
+      interactionStore,
+      approvedPlanStore,
     };
 
     const orch = new AgentOrchestrator(deps as OrchestratorDeps);
@@ -85,18 +98,26 @@ describe("AgentOrchestrator agent.create text", () => {
     expect(runtime.created).toEqual(["/tmp/ws1", "/tmp/ws2"]);
     expect(runtime.create).toHaveBeenCalledTimes(2);
     const last = messenger.sent[messenger.sent.length - 1]?.text ?? "";
-    expect(last).toMatch(/text agent text/);
+    expect(last).toMatch(/sessão/i);
   });
 
-  it("cached text agent.create text", async () => {
+  it("cached agent skips sessionCreate bucket", async () => {
     const runtime = makeFakeRuntime();
     const messenger = makeFakeMessenger();
     const registry = { getActive: () => ({ name: "ws1", path: "/tmp/ws1" }) };
+    const interactionStore = new PendingInteractionStore({ timeoutMs: 60_000 });
+    await interactionStore.init();
 
     const limiter = new RateLimiter({
-      buckets: { agentCreate: { capacity: 1, refillPerSec: 0.0001 } },
+      buckets: { sessionCreate: { capacity: 1, refillPerSec: 0.0001 } },
       now: () => 0,
     });
+
+    const approvedPlanStore = {
+      get: () => undefined,
+      set: vi.fn(async () => {}),
+      clear: vi.fn(async () => {}),
+    } as unknown as ApprovedPlanStore;
 
     const deps: Partial<OrchestratorDeps> = {
       messenger: messenger as unknown as OrchestratorDeps["messenger"],
@@ -104,8 +125,10 @@ describe("AgentOrchestrator agent.create text", () => {
       registry: registry as unknown as OrchestratorDeps["registry"],
       session: makeFakeSession() as unknown as OrchestratorDeps["session"],
       streamOptions: { throttleMs: 0, maxLen: 1000 },
-      defaultModel: { id: "default", params: [] },
+      acpMode: "agent",
       rateLimiter: limiter,
+      interactionStore,
+      approvedPlanStore,
     };
 
     const orch = new AgentOrchestrator(deps as OrchestratorDeps);

@@ -1,15 +1,15 @@
-import type { IMessenger } from "../../src/core/messenger/IMessenger.js";
+import type { IMessenger, InteractiveMessage } from "../../src/core/messenger/IMessenger.js";
 import type {
   IncomingTextMessage,
   IncomingImageMessage,
   IncomingImageGroup,
+  IncomingCallbackQuery,
   MessageHandle,
   ImagePayload,
   FilePayload,
   SendOptions,
 } from "../../src/core/messenger/types.js";
 
-// StubMessenger text calls textM1 text
 type Call =
   | { kind: "sendText"; chatId: string; text: string; opts?: SendOptions }
   | {
@@ -18,6 +18,11 @@ type Call =
       messageId: string;
       text: string;
       opts?: SendOptions;
+    }
+  | {
+      kind: "sendInteractive";
+      chatId: string;
+      msg: InteractiveMessage;
     }
   | {
       kind: "sendImage";
@@ -33,18 +38,15 @@ type Call =
       filename: string;
       size: number;
     }
-  | { kind: "sendTyping"; chatId: string };
+  | { kind: "sendTyping"; chatId: string }
+  | { kind: "answerCallbackQuery"; callbackQueryId: string; text?: string };
 
 export class StubMessenger implements IMessenger {
-  // M1text calls
   public calls: Call[] = [];
-
-  // M2text
   public sentTexts: Array<{ chatId: string; text: string; opts?: SendOptions }> = [];
   public sentImages: Array<{ chatId: string; image: ImagePayload; caption?: string }> = [];
   public sentDocuments: Array<{ chatId: string; file: FilePayload; caption?: string }> = [];
 
-  // M2text hooktext / text maxRetriestext
   public sendImageImpl?: (
     chatId: string,
     image: ImagePayload,
@@ -59,6 +61,7 @@ export class StubMessenger implements IMessenger {
   public textListeners: Array<(m: IncomingTextMessage) => void> = [];
   public imageListeners: Array<(m: IncomingImageMessage) => void> = [];
   public imageGroupListeners: Array<(m: IncomingImageGroup) => void> = [];
+  public callbackListeners: Array<(m: IncomingCallbackQuery) => void> = [];
 
   private idCounter = 0;
   private nextId(): string {
@@ -71,20 +74,22 @@ export class StubMessenger implements IMessenger {
   on(event: "text", h: (m: IncomingTextMessage) => void): void;
   on(event: "image", h: (m: IncomingImageMessage) => void): void;
   on(event: "imageGroup", h: (m: IncomingImageGroup) => void): void;
+  on(event: "callback_query", h: (m: IncomingCallbackQuery) => void): void;
   on(
-    event: "text" | "image" | "imageGroup",
+    event: "text" | "image" | "imageGroup" | "callback_query",
     h: (m: never) => void,
   ): void {
     if (event === "text") {
       this.textListeners.push(h as (m: IncomingTextMessage) => void);
     } else if (event === "image") {
       this.imageListeners.push(h as (m: IncomingImageMessage) => void);
-    } else {
+    } else if (event === "imageGroup") {
       this.imageGroupListeners.push(h as (m: IncomingImageGroup) => void);
+    } else {
+      this.callbackListeners.push(h as (m: IncomingCallbackQuery) => void);
     }
   }
 
-  // text incoming
   emitText(m: IncomingTextMessage): void {
     for (const l of this.textListeners) l(m);
   }
@@ -93,6 +98,9 @@ export class StubMessenger implements IMessenger {
   }
   emitImageGroup(m: IncomingImageGroup): void {
     for (const l of this.imageGroupListeners) l(m);
+  }
+  emitCallback(m: IncomingCallbackQuery): void {
+    for (const l of this.callbackListeners) l(m);
   }
 
   async sendText(
@@ -103,6 +111,18 @@ export class StubMessenger implements IMessenger {
     this.calls.push({ kind: "sendText", chatId, text, opts });
     this.sentTexts.push({ chatId, text, opts });
     return { messageId: this.nextId() };
+  }
+
+  async sendInteractiveMessage(
+    chatId: string,
+    msg: InteractiveMessage,
+  ): Promise<MessageHandle> {
+    this.calls.push({ kind: "sendInteractive", chatId, msg });
+    return { messageId: this.nextId() };
+  }
+
+  async answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
+    this.calls.push({ kind: "answerCallbackQuery", callbackQueryId, text });
   }
 
   async editText(
@@ -119,7 +139,6 @@ export class StubMessenger implements IMessenger {
     image: ImagePayload,
     caption?: string,
   ): Promise<MessageHandle> {
-    // hook text / text
     if (this.sendImageImpl) await this.sendImageImpl(chatId, image, caption);
     this.calls.push({
       kind: "sendImage",

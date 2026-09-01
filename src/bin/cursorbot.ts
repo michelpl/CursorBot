@@ -7,24 +7,47 @@ import { WorkspaceRegistry } from "../core/workspace/WorkspaceRegistry.js";
 import { SessionStore } from "../core/session/SessionStore.js";
 import { AccessControl } from "../core/access/AccessControl.js";
 import { AgentOrchestrator } from "../core/orchestrator/AgentOrchestrator.js";
-import { CursorSdkRuntime } from "../core/orchestrator/cursorSdkRuntime.js";
+import { AcpRuntime } from "../core/orchestrator/acpRuntime.js";
 import { AttachmentQueue } from "../core/attachments/AttachmentQueue.js";
 import { AttachmentDispatcher } from "../core/attachments/AttachmentDispatcher.js";
 import { ReminderStore } from "../core/reminders/ReminderStore.js";
 import { ReminderQuota } from "../core/reminders/ReminderQuota.js";
 import { ReminderScheduler } from "../core/reminders/ReminderScheduler.js";
+import { PendingInteractionStore } from "../core/interactions/PendingInteractionStore.js";
+import { InteractionRouter } from "../core/interactions/InteractionRouter.js";
 import { parseCommand } from "../commands/parser.js";
+import { parseModeCommand, modeCommandHelp } from "../commands/modeCommands.js";
+import {
+  buildExecutionPrompt,
+  shouldInjectApprovedPlan,
+} from "../core/orchestrator/planPrompt.js";
+import {
+  ApprovedPlanStore,
+  approvedPlanStorePath,
+} from "../core/plans/ApprovedPlanStore.js";
 import { dispatchCommand } from "../commands/dispatch.js";
 import { parseForcePrefix } from "../core/orchestrator/busyPolicy.js";
 import { sanitizeForOutput } from "../util/sanitize.js";
 import { RateLimiter } from "../core/rateLimit/RateLimiter.js";
 import { rateLimitGuard } from "./wiring/rateLimitGuard.js";
 
-// cursorbot textM1 + M2text config text text text text long-polling
 async function main(): Promise<void> {
   const cfg = await loadConfig({});
+  if (
+    cfg.cursor.apiKey.startsWith("REPLACE_") ||
+    cfg.cursor.apiKey === "key_..."
+  ) {
+    throw new Error(
+      "cursor.apiKey não configurada. Defina CURSOR_API_KEY no ambiente ou edite config.json.",
+    );
+  }
+  if (/^\d+:[A-Za-z0-9_-]+$/.test(cfg.cursor.apiKey)) {
+    logger.warn(
+      "cursor.apiKey parece ser o token do Telegram, não uma chave Cursor (key_…). " +
+        "Obtenha em Cursor Settings ou use `agent login`.",
+    );
+  }
   const dataDir = cfg.paths.dataDir;
-  // F-13textdataDir text session/reminder/text 0o700
   await mkdir(dataDir, { recursive: true, mode: 0o700 });
 
   const registry = new WorkspaceRegistry(join(dataDir, "workspaces.json"));
@@ -36,14 +59,12 @@ async function main(): Promise<void> {
   const session = new SessionStore(join(dataDir, "sessions.json"));
   await session.init();
 
-  // M2text dataDir text active workspace text .cursorbot/data-dir.txt
-  // text attach CLI text agent text cwd text dataDirtext
-  // text
+  const approvedPlanStore = new ApprovedPlanStore(approvedPlanStorePath(dataDir));
+  await approvedPlanStore.init();
+
   const writeClawMarker = async (wsPath: string): Promise<void> => {
     try {
       const markerDir = join(wsPath, ".cursorbot");
-      // F-13textmarker text dataDir text/text
-      // text 0o700/0o600text
       await mkdir(markerDir, { recursive: true, mode: 0o700 });
       const abs = resolve(dataDir);
       await writeFile(join(markerDir, "data-dir.txt"), abs, {
@@ -53,7 +74,7 @@ async function main(): Promise<void> {
     } catch (e) {
       logger.warn(
         { err: (e as Error).message, wsPath },
-        ".cursorbot/data-dir.txt text",
+        "failed to write data-dir marker",
       );
     }
   };
@@ -63,18 +84,17 @@ async function main(): Promise<void> {
     botToken: cfg.telegram.botToken,
     parseMode: cfg.telegram.parseMode,
     allowedUserIds: cfg.telegram.allowedUserIds,
-    // M2: text debounce text album text
     mediaGroupDebounceMs: cfg.images.mediaGroupDebounceMs,
-    // F-05: text attachments.maxFileSizeBytes text schema text
     maxFileSizeBytes: cfg.attachments.maxFileSizeBytes,
   });
-  const runtime = new CursorSdkRuntime(cfg.cursor.apiKey);
 
-  // M2: text queue + dispatcher
-  const queue = new AttachmentQueue(
-    join(dataDir, "attachments", "queue.jsonl"),
-  );
-  // F-14text pending text dispatchertext entry.path text
+  const runtime = new AcpRuntime({
+    agentCliPath: cfg.cursor.agentCliPath,
+    apiKey: cfg.cursor.apiKey,
+    mode: cfg.cursor.acpMode,
+  });
+
+  const queue = new AttachmentQueue(join(dataDir, "attachments", "queue.jsonl"));
   const pendingRoot = join(dataDir, "attachments", "pending");
   const dispatcher = new AttachmentDispatcher({
     queue,
@@ -84,37 +104,53 @@ async function main(): Promise<void> {
     pendingRoot,
   });
 
-  // M2: reminders store + scheduler
   const reminderStore = new ReminderStore(join(dataDir, "reminders.json"));
   await reminderStore.init();
 
-  // F-06: text RateLimitertextmessenger text / agent.create text
-  // ReminderQuota textPR etext
   const limiter = new RateLimiter({
     buckets: {
       msg: cfg.rateLimit.message,
-      agentCreate: cfg.rateLimit.agentCreate,
+      sessionCreate: cfg.rateLimit.sessionCreate,
     },
   });
+
+  const interactionStore = new PendingInteractionStore({
+    dataDir,
+    timeoutMs: cfg.cursor.interactionTimeoutMs,
+  });
+  await interactionStore.init();
 
   const orchestrator = new AgentOrchestrator({
     messenger,
     runtime,
     registry,
     session,
-    // text Telegram text800ms text RPS text
-    // M2 polishtexttextBuffer text raw markdown text compose text markdownToHtmltext
-    // HTML text** text +1 / < text &lt; text +3 text maxLen text 3500 text 3000
-    // text HTML text ~30% text Telegram 4096 text
     streamOptions: { throttleMs: 800, maxLen: 3000 },
-    defaultModel: cfg.cursor.defaultModel,
+    acpMode: cfg.cursor.acpMode,
     attachmentDispatcher: dispatcher,
-    // F-10text sandboxOptions text orchestrator text runtime text SDK text
-    // schema text enabled=truetext config.json text false text
-    sandboxOptions: cfg.cursor.sandboxOptions,
-    // F-06textagent.create / resume cached miss text
     rateLimiter: limiter,
+    interactionStore,
+    approvedPlanStore,
   });
+
+  interactionStore.setOnTimeout(async (item) => {
+    logger.warn({ interactionId: item.interactionId }, "interaction timed out");
+    try {
+      await orchestrator.respondToInteraction(
+        item.chatId,
+        item.interactionId,
+        interactionStore.defaultTimeoutResponse(item.kind),
+      );
+      await messenger.sendText(
+        item.chatId,
+        "⏱ Interação expirada — resposta automática aplicada.",
+      );
+    } catch (e) {
+      logger.error({ err: (e as Error).message }, "interaction timeout handler failed");
+    }
+  });
+
+  const interactionRouter = new InteractionRouter(interactionStore);
 
   const scheduler = new ReminderScheduler({
     store: reminderStore,
@@ -123,32 +159,27 @@ async function main(): Promise<void> {
       await messenger.sendText(chatId, text);
     },
   });
-  // F-06text/remind add text createdBy text 100/usertext
   const reminderQuota = new ReminderQuota(scheduler, {
     maxPerUser: cfg.rateLimit.reminders.maxPerUser,
   });
   await scheduler.start();
 
-  // text .cursorbot text messenger.start() text
   const activeWs = registry.getActive();
   if (activeWs) await writeClawMarker(activeWs.path);
-  // F-07text/ws add text cwd text workspace text config.workspaces.allowedRoots text
   const workspaceAllowedRoots =
     cfg.workspaces.allowedRoots.length > 0
       ? cfg.workspaces.allowedRoots
       : [process.cwd(), ...registry.list().map((w) => w.path)];
 
   messenger.on("text", (msg) => {
-    // text tracetext
     logger.info(
       { userId: msg.userId, username: msg.username, len: msg.text.length },
       "incoming text",
     );
     if (!access.isAllowed(msg.userId)) {
-      logger.warn({ userId: msg.userId }, "userId text allowedUserIdstext");
+      logger.warn({ userId: msg.userId }, "user not in allowedUserIds");
       return;
     }
-    // F-06text messenger textdeny text guard text
     void (async () => {
       const ok = await rateLimitGuard({
         limiter,
@@ -162,21 +193,17 @@ async function main(): Promise<void> {
     })();
   });
 
-  // M2text image text listener text
-  // text agent text imageGroup text
   messenger.on("image", () => {});
 
   messenger.on("imageGroup", (msg) => {
     if (!access.isAllowed(msg.userId)) {
-      logger.warn({ userId: msg.userId }, "userId text allowedUserIdstext");
+      logger.warn({ userId: msg.userId }, "user not in allowedUserIds");
       return;
     }
     logger.info(
       { userId: msg.userId, n: msg.images.length, hasCaption: !!msg.caption },
       "incoming imageGroup",
     );
-    // F-06text "msg" buckettext quotatext
-    // text user text capacity 4 / 2 msg-per-sec text
     void (async () => {
       const ok = await rateLimitGuard({
         limiter,
@@ -190,10 +217,29 @@ async function main(): Promise<void> {
     })();
   });
 
-  await messenger.start();
-  logger.info("cursorbot started");
+  messenger.on("callback_query", (msg) => {
+    if (!access.isAllowed(msg.userId)) return;
+    void (async () => {
+      const routed = interactionRouter.routeCallback(msg.chatId, msg.data);
+      if (!routed || routed.action !== "respond") {
+        await messenger.answerCallbackQuery(msg.callbackQueryId);
+        return;
+      }
+      const ok = await orchestrator.respondToInteraction(
+        msg.chatId,
+        routed.interactionId,
+        routed.response,
+      );
+      await messenger.answerCallbackQuery(
+        msg.callbackQueryId,
+        ok ? "Registrado" : "Interação inválida",
+      );
+    })();
+  });
 
-  // SIGINT/SIGTERM text long-pollingtext dispose scheduler / orchestrator
+  await messenger.start();
+  logger.info("cursorbot started (ACP mode)");
+
   const shutdown = async (): Promise<void> => {
     logger.info("shutting down...");
     try {
@@ -202,10 +248,14 @@ async function main(): Promise<void> {
       logger.error({ err: (e as Error).message }, "messenger stop");
     }
     try {
-      // M2: scheduler text disposetext timer text orchestrator text disposed
       scheduler.dispose();
     } catch (e) {
       logger.error({ err: (e as Error).message }, "scheduler dispose");
+    }
+    try {
+      interactionStore.dispose();
+    } catch (e) {
+      logger.error({ err: (e as Error).message }, "interaction store dispose");
     }
     try {
       await orchestrator.dispose();
@@ -217,10 +267,6 @@ async function main(): Promise<void> {
   process.on("SIGINT", () => void shutdown());
   process.on("SIGTERM", () => void shutdown());
 
-  // M2text imageGroup text orchestrator.runPromptWithImages
-  // - text cfg.images.maxImagesPerPrompt text
-  // - caption text single/multi text prompt
-  // - text handleText text ! text force=true
   async function handleImageGroup(
     chatId: string,
     images: Array<{ data: string; mimeType: string }>,
@@ -234,7 +280,7 @@ async function main(): Promise<void> {
         used = images.slice(0, cap);
         await messenger.sendText(
           chatId,
-          `text ${cap} text ${cap} text`,
+          `Limite de ${cap} imagens por prompt — usando as primeiras ${cap}.`,
         );
       }
       const text =
@@ -251,16 +297,12 @@ async function main(): Promise<void> {
         userId,
       });
     } catch (e) {
-      logger.error({ err: (e as Error).message }, "handleImageGroup text");
+      logger.error({ err: (e as Error).message }, "handleImageGroup failed");
       try {
-        // F-01 text echo text sanitizetext token / API key text error.message text Telegramtext
-        // text downloadFile text
         const safeMsg = sanitizeForOutput((e as Error).message);
-        await messenger.sendText(
-          chatId,
-          `text${safeMsg}`.slice(0, 800),
-          { parseMode: "plain" },
-        );
+        await messenger.sendText(chatId, `Erro: ${safeMsg}`.slice(0, 800), {
+          parseMode: "plain",
+        });
       } catch {
         /* ignore */
       }
@@ -272,10 +314,57 @@ async function main(): Promise<void> {
     text: string,
     userId: number,
   ): Promise<void> {
-    // text try/catchtextTelegram 400/429 text
     try {
+      const routed = interactionRouter.routeText(chatId, text);
+      if (routed.action === "respond") {
+        const ok = await orchestrator.respondToInteraction(
+          chatId,
+          routed.interactionId,
+          routed.response,
+        );
+        if (ok) return;
+      }
+
       const parsed = parseCommand(text);
       if (parsed.type === "command") {
+        const modeCmd = parseModeCommand(parsed);
+        if (modeCmd) {
+          if (modeCmd.kind === "help") {
+            await messenger.sendText(chatId, modeCommandHelp(modeCmd.mode), {
+              parseMode: "plain",
+            });
+            return;
+          }
+          if (modeCmd.kind === "set-only") {
+            await orchestrator.setSessionMode({
+              chatId,
+              mode: modeCmd.mode,
+              userId,
+            });
+            await messenger.sendText(chatId, `Modo ${modeCmd.mode} ativo.`, {
+              parseMode: "plain",
+            });
+            return;
+          }
+          let promptText = modeCmd.text;
+          const ws = registry.getActive();
+          if (ws && modeCmd.mode === "agent") {
+            const approved = approvedPlanStore.get(ws.name);
+            if (approved && shouldInjectApprovedPlan(promptText)) {
+              promptText = buildExecutionPrompt(promptText, approved.plan);
+            }
+          }
+          const { force, text: clean } = parseForcePrefix(promptText);
+          await orchestrator.runPrompt({
+            chatId,
+            text: clean,
+            force,
+            userId,
+            mode: modeCmd.mode,
+          });
+          return;
+        }
+
         await dispatchCommand(parsed, {
           chatId,
           userId,
@@ -293,22 +382,17 @@ async function main(): Promise<void> {
         });
         return;
       }
-      // text prompt text ! force text
       const { force, text: clean } = parseForcePrefix(parsed.text);
       await orchestrator.runPrompt({ chatId, text: clean, force, userId });
     } catch (e) {
-      logger.error({ err: (e as Error).message }, "handleText text");
+      logger.error({ err: (e as Error).message }, "handleText failed");
       try {
-        // F-01 textsanitize text echotext handleImageGroup text
         const safeMsg = sanitizeForOutput((e as Error).message);
-        // text plain text HTML text
-        await messenger.sendText(
-          chatId,
-          `text${safeMsg}`.slice(0, 800),
-          { parseMode: "plain" },
-        );
+        await messenger.sendText(chatId, `Erro: ${safeMsg}`.slice(0, 800), {
+          parseMode: "plain",
+        });
       } catch {
-        /* text */
+        /* ignore */
       }
     }
   }

@@ -52,7 +52,7 @@ export async function dispatchCommand(
       if (!ctx.scheduler || !ctx.reminderQuota || !ctx.reminderConfig) {
         await ctx.messenger.sendText(
           ctx.chatId,
-          "/remind textreminder scheduler text",
+          "/remind indisponível: scheduler não configurado.",
         );
         return;
       }
@@ -70,7 +70,7 @@ export async function dispatchCommand(
     default:
       await ctx.messenger.sendText(
         ctx.chatId,
-        `text/${cmd.name}text/help text`,
+        `Comando desconhecido: /${cmd.name}. Use /help.`,
       );
   }
 }

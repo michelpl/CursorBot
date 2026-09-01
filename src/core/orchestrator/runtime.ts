@@ -1,35 +1,31 @@
-// text @cursor/sdk text
-// 1) text StubRuntime text orchestrator text
-// 2) text / text SDK text orchestratortext
+// Runtime abstractions — ACP-backed agent execution for CursorBot.
+
+export type AcpMode = "agent" | "plan" | "ask";
+
+export interface RuntimeModeInfo {
+  id: string;
+  name: string;
+  description?: string;
+}
 
 export interface IAgentRuntime {
   create(opts: CreateAgentOptions): Promise<RuntimeAgent>;
-  resume(agentId: string, opts: ResumeAgentOptions): Promise<RuntimeAgent>;
+  resume(sessionId: string, opts: ResumeAgentOptions): Promise<RuntimeAgent>;
 }
 
 export interface CreateAgentOptions {
-  agentId?: string;
   cwd: string;
-  model?: { id: string; params?: Array<{ id: string; value: string }> };
-  settingSources?: ("project" | "user" | "team" | "mdm" | "plugins" | "all")[];
+  mode?: AcpMode;
   mcpServers?: Record<string, unknown>;
-  // F-10text SDK text local.sandboxOptionstextenabled=true text Cursor SDK text
-  // text ~/.cursor/sandbox.json text <workspace>/.cursor/sandbox.json text
-  sandboxOptions?: { enabled: boolean };
 }
 
 export interface ResumeAgentOptions {
   cwd: string;
-  model?: { id: string; params?: Array<{ id: string; value: string }> };
-  settingSources?: ("project" | "user" | "team" | "mdm" | "plugins" | "all")[];
-  // F-10text CreateAgentOptions.sandboxOptions textresume text
-  // text session text
-  sandboxOptions?: { enabled: boolean };
+  mode?: AcpMode;
 }
 
 export interface RuntimeAgent {
-  agentId: string;
-  // M2text images text SDK text sendtext"text+text"text prompttext
+  sessionId: string;
   send(
     text: string,
     opts?: {
@@ -37,8 +33,16 @@ export interface RuntimeAgent {
       images?: Array<{ data: string; mimeType: string }>;
     },
   ): Promise<RuntimeRun>;
+  setMode(modeId: AcpMode): Promise<void>;
+  getMode(): string | undefined;
+  getAvailableModes(): RuntimeModeInfo[];
   dispose(): Promise<void>;
 }
+
+export type RuntimeInteractionResponse =
+  | { kind: "permission"; optionId: "allow-once" | "allow-always" | "reject-once" }
+  | { kind: "question"; answers: Record<string, string[]> }
+  | { kind: "plan"; accepted: boolean; save?: boolean };
 
 export interface RuntimeRun {
   status: "running" | "finished" | "error" | "cancelled";
@@ -49,9 +53,9 @@ export interface RuntimeRun {
     durationMs?: number;
   }>;
   cancel(): Promise<void>;
+  respond(interactionId: string, response: RuntimeInteractionResponse): Promise<void>;
 }
 
-// text SDK text orchestrator text
 export type RuntimeStreamEvent =
   | { type: "assistant"; text: string }
   | { type: "thinking"; text: string }
@@ -60,4 +64,36 @@ export type RuntimeStreamEvent =
       status: "running" | "completed" | "error";
       name: string;
       args?: unknown;
+    }
+  | {
+      type: "permission_request";
+      interactionId: string;
+      tool?: string;
+      args?: unknown;
+      summary?: string;
+    }
+  | {
+      type: "question_request";
+      interactionId: string;
+      title?: string;
+      questions: Array<{
+        id: string;
+        prompt: string;
+        options: Array<{ id: string; label: string }>;
+        allowMultiple?: boolean;
+      }>;
+    }
+  | {
+      type: "plan_request";
+      interactionId: string;
+      name?: string;
+      overview?: string;
+      plan: string;
+      todos: Array<{ id: string; content: string; status: string }>;
+    }
+  | {
+      type: "notification";
+      subtype: "todos" | "task" | "generate_image";
+      message?: string;
+      params?: unknown;
     };

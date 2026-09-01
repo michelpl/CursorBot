@@ -14,10 +14,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 const exec = promisify(execFile);
 
-// text npx tsx text unit test text build
-const TSX = "npx";
+// Use local tsx binary (npx may be unavailable in CI/sandbox)
+const TSX = resolve("node_modules/tsx/dist/cli.mjs");
+const NODE = process.execPath;
 const ARGS = (entry: string, ...rest: string[]): string[] => [
-  "tsx",
+  TSX,
   resolve("src/tools", entry),
   ...rest,
 ];
@@ -50,7 +51,7 @@ describe("attach CLItextspawntext", () => {
     entry: string,
     ...rest: string[]
   ): Promise<{ stdout: string; stderr: string }> {
-    return exec(TSX, ARGS(entry, ...rest), {
+    return exec(NODE, ARGS(entry, ...rest), {
       cwd: workDir,
       env: { ...process.env, CURSORBOT_DATA_DIR: dataDir },
     });
@@ -108,9 +109,9 @@ describe("attach CLItextspawntext", () => {
     ).rejects.toMatchObject({ code: 1 });
   });
 
-  it("text CURSORBOT_DATA_DIR text .cursorbot text exit 1", { timeout: SLOW }, async () => {
+  it("missing data-dir marker exits 1", { timeout: SLOW }, async () => {
     await expect(
-      exec(TSX, ARGS("attach-image.ts", imgPath), { cwd: workDir }),
+      exec(NODE, ARGS("attach-image.ts", imgPath), { cwd: workDir }),
     ).rejects.toMatchObject({ code: 1 });
   });
 });

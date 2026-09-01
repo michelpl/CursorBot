@@ -57,7 +57,7 @@ describe("downloadTelegramFile text F-05 size cap", () => {
         botToken: "12345:fake",
         maxFileSizeBytes: 5_000_000,
       }),
-    ).rejects.toThrow(/file_size/);
+    ).rejects.toThrow(/Arquivo muito grande|muito grande/i);
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -101,7 +101,7 @@ describe("downloadTelegramFile text F-05 size cap", () => {
         botToken: "12345:fake",
         maxFileSizeBytes: 5 * 1024 * 1024,
       }),
-    ).rejects.toThrow(/(size|cap|exceed)/i);
+    ).rejects.toThrow(/excede|Tamanho/i);
   });
 
   it("Case 4text base64", async () => {

@@ -49,7 +49,7 @@ describe("rateLimitGuard / msg key", () => {
       false,
     ]);
     expect(messenger.sent.length).toBe(4);
-    expect(messenger.sent[0]?.text).toMatch(/text/);
+    expect(messenger.sent[0]?.text).toMatch(/Muitas mensagens/i);
   });
 
   it("text user text", async () => {

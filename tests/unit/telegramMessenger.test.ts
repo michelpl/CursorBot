@@ -17,6 +17,6 @@ describe("TelegramMessenger", () => {
       parseMode: "HTML",
       maxFileSizeBytes: 20 * 1024 * 1024,
     });
-    await expect(m.sendText("1", "hi")).rejects.toThrow(/text/);
+    await expect(m.sendText("1", "hi")).rejects.toThrow(/não iniciado/i);
   });
 });

@@ -5,17 +5,23 @@ import type { SessionStore } from "../session/SessionStore.js";
 import { StreamRenderer, type StreamRendererOptions } from "./streamRenderer.js";
 import { summarizeTool } from "./toolSummary.js";
 import { decideBusyAction, type RunStatus } from "./busyPolicy.js";
-import type { IAgentRuntime, RuntimeAgent, RuntimeRun } from "./runtime.js";
+import type {
+  IAgentRuntime,
+  RuntimeAgent,
+  RuntimeRun,
+  RuntimeInteractionResponse,
+  RuntimeStreamEvent,
+  AcpMode,
+} from "./runtime.js";
 import type { AttachmentDispatcher } from "../attachments/AttachmentDispatcher.js";
 import type { RateLimiter } from "../rateLimit/RateLimiter.js";
 import { RateLimitedError } from "../rateLimit/errors.js";
-import { rateLimitedAgentCreateText } from "../../util/rateLimitMessages.js";
+import { rateLimitedSessionCreateText } from "../../util/rateLimitMessages.js";
 import { wrapUserPrompt } from "./promptEnvelope.js";
-
-// HTML text < > & text HTML parse_mode text
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+import type { PendingInteractionStore } from "../interactions/PendingInteractionStore.js";
+import type { ApprovedPlanStore } from "../plans/ApprovedPlanStore.js";
+import { escapeHtml } from "../../util/html.js";
+import { sendLongHtmlText } from "../../util/sendLongText.js";
 
 export interface OrchestratorDeps {
   messenger: IMessenger;
@@ -23,68 +29,129 @@ export interface OrchestratorDeps {
   registry: WorkspaceRegistry;
   session: SessionStore;
   streamOptions: StreamRendererOptions;
-  defaultModel: { id: string; params: Array<{ id: string; value: string }> };
-  // M2: text runInternal text cwd text attach text
-  // text orchestrator text dispatcher text
+  acpMode: "agent" | "plan" | "ask";
   attachmentDispatcher?: AttachmentDispatcher;
-  // F-10text cfg.cursor.sandboxOptions text runtime.create / runtime.resumetext
-  // schema text orchestrator text cursorSdkRuntime text
-  // text"text"text create + resume text
-  sandboxOptions?: { enabled: boolean };
-  // F-06textcached miss text Agent.create / resume text
   rateLimiter?: RateLimiter;
+  interactionStore: PendingInteractionStore;
+  approvedPlanStore: ApprovedPlanStore;
 }
 
 interface PoolEntry {
   agent: RuntimeAgent;
   activeRun?: RuntimeRun;
+  chatId?: string;
 }
 
-/**
- * cursorbot text"text"text + SDK runtime text
- *
- * text
- * - text workspace name text SDKAgent text workspace text agenttext
- * - text prompt text run / reject / force-replace
- * - text SDK text IMessenger text
- * - text cancel / reset / dispose text
- */
 export class AgentOrchestrator {
   private readonly pool = new Map<string, PoolEntry>();
 
   constructor(private readonly deps: OrchestratorDeps) {}
+
+  hasPendingInteraction(chatId: string): boolean {
+    return this.deps.interactionStore.hasPending(chatId);
+  }
+
+  isRunning(chatId: string): boolean {
+    for (const entry of this.pool.values()) {
+      if (entry.chatId === chatId && entry.activeRun?.status === "running") {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async respondToInteraction(
+    chatId: string,
+    interactionId: string,
+    response: RuntimeInteractionResponse,
+  ): Promise<boolean> {
+    const pending = this.deps.interactionStore.get(interactionId);
+    if (!pending || pending.chatId !== chatId) return false;
+
+    const entry = this.pool.get(pending.workspaceId);
+    if (!entry?.activeRun) return false;
+
+    if (
+      response.kind === "plan" &&
+      response.accepted &&
+      response.save &&
+      pending.planData
+    ) {
+      await this.deps.approvedPlanStore.set(pending.workspaceId, {
+        workspaceId: pending.workspaceId,
+        chatId,
+        name: pending.planData.name,
+        overview: pending.planData.overview,
+        plan: pending.planData.plan,
+        todos: pending.planData.todos,
+        approvedAt: Date.now(),
+      });
+      await this.deps.messenger.sendText(
+        chatId,
+        "Plano guardado. Use `/agent <prompt>` para executar (ex.: `/agent executar o plano`).",
+        { parseMode: "plain" },
+      );
+    }
+
+    await entry.activeRun.respond(interactionId, response);
+    await this.deps.interactionStore.remove(interactionId);
+    return true;
+  }
+
+  async setSessionMode(input: {
+    chatId: string;
+    mode: AcpMode;
+    userId: number;
+  }): Promise<void> {
+    const ws = this.deps.registry.getActive();
+    if (!ws) {
+      await this.deps.messenger.sendText(
+        input.chatId,
+        "Nenhum workspace ativo. Use /ws add para adicionar um repositório.",
+      );
+      return;
+    }
+    const entry = await this.ensureAgent(ws.name, ws.path, input.userId);
+    await entry.agent.setMode(input.mode);
+  }
+
+  getSessionStatus(): {
+    mode?: string;
+    hasApprovedPlan: boolean;
+    approvedPlanName?: string;
+  } | null {
+    const ws = this.deps.registry.getActive();
+    if (!ws) return null;
+    const entry = this.pool.get(ws.name);
+    const approved = this.deps.approvedPlanStore.get(ws.name);
+    return {
+      mode: entry?.agent.getMode(),
+      hasApprovedPlan: !!approved,
+      approvedPlanName: approved?.name,
+    };
+  }
 
   async runPrompt(input: {
     chatId: string;
     text: string;
     force: boolean;
     userId: number;
+    mode?: AcpMode;
   }): Promise<void> {
     await this.runInternal(input);
   }
 
-  // M2text runPrompt text SDK.send text images text
   async runPromptWithImages(input: {
     chatId: string;
     text: string;
     force: boolean;
     images: Array<{ data: string; mimeType: string }>;
     userId: number;
+    mode?: AcpMode;
   }): Promise<void> {
     await this.runInternal(input);
   }
 
-  /**
-   * M2text remindertext
-   * - kind='text' text text sendTexttext busy
-   * - kind='prompt' text text runInternaltextforce text falsetext busy text scheduler
-   *
-   * scheduler text busy=true text +60stext busy text
-   * sendText text delivered/busy text scheduler text
-   *
-   * textkind='prompt' text workspaceId text active workspacetext
-   * text cross-workspace reminder text M3+text
-   */
   async runReminder(input: {
     chatId: string;
     kind: "text" | "prompt";
@@ -95,11 +162,9 @@ export class AgentOrchestrator {
   }): Promise<{ delivered: boolean; busy?: boolean }> {
     if (input.kind === "text") {
       const text = input.text ?? "";
-      await this.deps.messenger.sendText(input.chatId, `text ${text}`);
+      await this.deps.messenger.sendText(input.chatId, `🔔 Lembrete: ${text}`);
       return { delivered: true };
     }
-    // prompt textforce text falsetext skipBusyMsg text"agent text"text
-    // text scheduler text vs text
     const ok = await this.runInternal({
       chatId: input.chatId,
       text: input.prompt ?? "",
@@ -110,25 +175,20 @@ export class AgentOrchestrator {
     return { delivered: ok, busy: !ok };
   }
 
-  // texttext-only / images / reminder text
-  // text
-  // 1. text ensureAgent / busyPolicy / streamRenderer text
-  // 2. text images text send text
-  // texttrue=text send / text streamtextfalse=text ws / busy rejecttext
   private async runInternal(input: {
     chatId: string;
     text: string;
     force: boolean;
     images?: Array<{ data: string; mimeType: string }>;
-    // M2textreminder text prompt text busy text
     skipBusyMsg?: boolean;
     userId: number;
+    mode?: AcpMode;
   }): Promise<boolean> {
     const ws = this.deps.registry.getActive();
     if (!ws) {
       await this.deps.messenger.sendText(
         input.chatId,
-        "text /ws add text",
+        "Nenhum workspace ativo. Use /ws add para adicionar um repositório.",
       );
       return false;
     }
@@ -145,23 +205,33 @@ export class AgentOrchestrator {
         );
         await this.deps.messenger.sendText(
           input.chatId,
-          rateLimitedAgentCreateText(e.retryAfterMs),
+          rateLimitedSessionCreateText(e.retryAfterMs),
           { parseMode: "plain" },
         );
         return false;
       }
       throw e;
     }
+
+    if (input.mode) {
+      await entry.agent.setMode(input.mode);
+    }
+
     const action = decideBusyAction({
       activeRunStatus: entry.activeRun?.status as RunStatus | undefined,
       force: input.force,
+      hasPendingInteraction: this.deps.interactionStore.hasPending(input.chatId),
     });
+
+    if (action === "respond") {
+      return false;
+    }
 
     if (action === "reject") {
       if (!input.skipBusyMsg) {
         await this.deps.messenger.sendText(
           input.chatId,
-          `Agent text <b>${ws.name}</b> text /cancel text ! text`,
+          `Agente em <b>${escapeHtml(ws.name)}</b> ocupado. Use /cancel ou prefixe com <code>!</code> para forçar.`,
           { parseMode: "HTML" },
         );
       }
@@ -173,7 +243,14 @@ export class AgentOrchestrator {
       input.chatId,
       this.deps.streamOptions,
     );
-    await renderer.start("Iniciando...");
+    const runMode = input.mode ?? entry.agent.getMode();
+    const statusLabel =
+      runMode === "plan"
+        ? "Elaborando plano..."
+        : runMode === "ask"
+          ? "Respondendo..."
+          : "Iniciando...";
+    await renderer.start(statusLabel);
 
     let run: RuntimeRun;
     try {
@@ -184,73 +261,71 @@ export class AgentOrchestrator {
     } catch (e) {
       const msg = (e as Error).message;
       logger.error({ err: msg }, "agent.send failed");
-      // text < > text Telegram HTMLtext escape text
-      await renderer.finalize(`\ntext Error: ${escapeHtml(msg.slice(0, 400))}`);
-      // text"text"textagent text true text scheduler text
+      await renderer.finalize(`\nErro: ${escapeHtml(msg.slice(0, 400))}`);
       return true;
     }
     entry.activeRun = run;
+    entry.chatId = input.chatId;
     renderer.setStatus("Trabalhando...");
 
     try {
       for await (const event of run.stream()) {
-        switch (event.type) {
-          case "assistant":
-            // M2 polishtextStreamRenderer text raw markdown + compose text
-            // text SDK text ** / ` / [ ] text chunk text regex text
-            await renderer.pushText(event.text);
-            break;
-          case "thinking":
-            renderer.setStatus("Analisando...");
-            break;
-          case "tool_call":
-            if (event.status === "running") {
-              const summary = summarizeTool(event.name, event.args);
-              renderer.recordActivity(`⚙️ ${summary}`);
-              renderer.setStatus(`Executando ${summary}`);
-            } else if (event.status === "completed") {
-              renderer.recordActivity(`✅ ${event.name} concluído`);
-              renderer.setStatus("Analisando...");
-            } else {
-              renderer.recordActivity(`❌ ${event.name} falhou`);
-              renderer.setStatus(`${event.name} falhou`);
-            }
-            break;
-        }
+        await this.handleStreamEvent(event, {
+          chatId: input.chatId,
+          workspaceId: wsId,
+          renderer,
+          run,
+        });
       }
       const r = await run.wait();
       if (r.status === "cancelled") {
         renderer.recordActivity("⏹ Cancelado");
-        await renderer.finalize("\n<i>(text)</i>");
+        await renderer.finalize("\n<i>(cancelado)</i>");
+        await this.deps.messenger.sendText(input.chatId, "⏹ Execução cancelada.");
       } else if (r.status === "error") {
-        // SDK text result textserver text + Telegram text N text
         logger.error(
           { err: r.result, durationMs: r.durationMs },
           "run finished with error",
         );
         const tail = r.result
-          ? `\ntext Error: ${escapeHtml(r.result.slice(0, 400))}`
-          : "\ntext Error";
-        renderer.recordActivity(`❌ Falhou${r.durationMs ? ` após ${formatDuration(r.durationMs)}` : ""}`);
+          ? `\nErro: ${escapeHtml(r.result.slice(0, 400))}`
+          : "\nErro desconhecido";
+        renderer.recordActivity(
+          `❌ Falhou${r.durationMs ? ` após ${formatDuration(r.durationMs)}` : ""}`,
+        );
         await renderer.finalize(tail);
+        await this.deps.messenger.sendText(
+          input.chatId,
+          `❌ Falhou${r.durationMs ? ` após ${formatDuration(r.durationMs)}` : ""}.`,
+        );
       } else {
-        renderer.recordActivity(`✅ Finalizado${r.durationMs ? ` em ${formatDuration(r.durationMs)}` : ""}`);
+        renderer.recordActivity(
+          `✅ Finalizado${r.durationMs ? ` em ${formatDuration(r.durationMs)}` : ""}`,
+        );
         await renderer.finalize();
+        const doneMsg =
+          runMode === "plan"
+            ? `📋 Plano concluído${r.durationMs ? ` em ${formatDuration(r.durationMs)}` : ""}.`
+            : runMode === "ask"
+              ? `💬 Resposta concluída${r.durationMs ? ` em ${formatDuration(r.durationMs)}` : ""}.`
+              : `✅ Execução concluída${r.durationMs ? ` em ${formatDuration(r.durationMs)}` : ""}.`;
+        await this.deps.messenger.sendText(input.chatId, doneMsg);
       }
     } finally {
-      if (entry.activeRun === run) entry.activeRun = undefined;
+      if (entry.activeRun === run) {
+        entry.activeRun = undefined;
+        entry.chatId = undefined;
+      }
+      this.deps.interactionStore.clearForChat(input.chatId);
     }
 
-    // M2: run text finished / cancelled / errortext
-    // text workspace text chatIdtextattach CLI text agent text run text
-    // textdispatcher text/text/text
     if (this.deps.attachmentDispatcher) {
       try {
         await this.deps.attachmentDispatcher.flushForCwd(ws.path, input.chatId);
       } catch (e) {
         logger.error(
           { err: (e as Error).message },
-          "dispatcher.flushForCwd text",
+          "dispatcher.flushForCwd failed",
         );
       }
     }
@@ -258,22 +333,170 @@ export class AgentOrchestrator {
     return true;
   }
 
-  async cancel(workspaceId: string): Promise<void> {
-    const entry = this.pool.get(workspaceId);
-    if (entry?.activeRun) await entry.activeRun.cancel();
+  private async handleStreamEvent(
+    event: RuntimeStreamEvent,
+    ctx: {
+      chatId: string;
+      workspaceId: string;
+      renderer: StreamRenderer;
+      run: RuntimeRun;
+    },
+  ): Promise<void> {
+    switch (event.type) {
+      case "assistant":
+        await ctx.renderer.pushText(event.text);
+        break;
+      case "thinking":
+        ctx.renderer.setStatus("Analisando...");
+        break;
+      case "tool_call":
+        if (event.status === "running") {
+          const summary = summarizeTool(event.name, event.args);
+          ctx.renderer.recordActivity(`⚙️ ${summary}`);
+          ctx.renderer.setStatus(`Executando ${summary}`);
+        } else if (event.status === "completed") {
+          ctx.renderer.recordActivity(`✅ ${event.name} concluído`);
+          ctx.renderer.setStatus("Analisando...");
+        } else {
+          ctx.renderer.recordActivity(`❌ ${event.name} falhou`);
+          ctx.renderer.setStatus(`${event.name} falhou`);
+        }
+        break;
+      case "permission_request":
+        await this.handlePermissionRequest(event, ctx);
+        break;
+      case "question_request":
+        await this.handleQuestionRequest(event, ctx);
+        break;
+      case "plan_request":
+        await this.handlePlanRequest(event, ctx);
+        break;
+      case "notification":
+        await this.handleNotification(event, ctx.chatId);
+        break;
+    }
   }
 
-  // /reset text agent text + text sessionStore text agentId
+  private async handlePermissionRequest(
+    event: Extract<RuntimeStreamEvent, { type: "permission_request" }>,
+    ctx: { chatId: string; workspaceId: string },
+  ): Promise<void> {
+    const summary = event.summary ?? event.tool ?? "ferramenta";
+    this.deps.interactionStore.register({
+      interactionId: event.interactionId,
+      chatId: ctx.chatId,
+      workspaceId: ctx.workspaceId,
+      kind: "permission",
+    });
+    await this.deps.messenger.sendText(
+      ctx.chatId,
+      "🔐 O agente precisa da sua permissão para continuar.",
+    );
+    await this.deps.messenger.sendInteractiveMessage(ctx.chatId, {
+      text: `🔐 Permissão solicitada:\n<b>${escapeHtml(summary)}</b>`,
+      parseMode: "HTML",
+      buttons: [
+        { id: `acp:${event.interactionId}:allow-once`, label: "Permitir uma vez" },
+        { id: `acp:${event.interactionId}:allow-always`, label: "Sempre permitir" },
+        { id: `acp:${event.interactionId}:reject-once`, label: "Negar" },
+      ],
+    });
+  }
+
+  private async handleQuestionRequest(
+    event: Extract<RuntimeStreamEvent, { type: "question_request" }>,
+    ctx: { chatId: string; workspaceId: string },
+  ): Promise<void> {
+    this.deps.interactionStore.register({
+      interactionId: event.interactionId,
+      chatId: ctx.chatId,
+      workspaceId: ctx.workspaceId,
+      kind: "question",
+    });
+    const q = event.questions[0];
+    if (!q) return;
+    const title = event.title ?? q.prompt;
+    const buttons = q.options.map((o) => ({
+      id: `acp:${event.interactionId}:select:${q.id}:${o.id}`,
+      label: o.label,
+    }));
+    if (q.allowMultiple) {
+      buttons.push({
+        id: `acp:${event.interactionId}:done`,
+        label: "Confirmar seleção",
+      });
+    }
+    await this.deps.messenger.sendText(ctx.chatId, "❓ O agente fez uma pergunta — responda abaixo.");
+    await this.deps.messenger.sendInteractiveMessage(ctx.chatId, {
+      text: `❓ ${escapeHtml(title)}`,
+      parseMode: "HTML",
+      buttons,
+    });
+  }
+
+  private async handlePlanRequest(
+    event: Extract<RuntimeStreamEvent, { type: "plan_request" }>,
+    ctx: { chatId: string; workspaceId: string },
+  ): Promise<void> {
+    this.deps.interactionStore.register({
+      interactionId: event.interactionId,
+      chatId: ctx.chatId,
+      workspaceId: ctx.workspaceId,
+      kind: "plan",
+      planData: {
+        name: event.name,
+        overview: event.overview,
+        plan: event.plan,
+        todos: event.todos,
+      },
+    });
+    const title = event.name ?? "Sem título";
+    await sendLongHtmlText(this.deps.messenger, ctx.chatId, event.plan, {
+      header: `📋 Plano: ${title}`,
+    });
+    await this.deps.messenger.sendInteractiveMessage(ctx.chatId, {
+      text: `<b>${escapeHtml(title)}</b> — aprovar e guardar para executar depois?`,
+      parseMode: "HTML",
+      buttons: [
+        { id: `acp:${event.interactionId}:approve-save`, label: "Aprovar e guardar" },
+        { id: `acp:${event.interactionId}:reject`, label: "Rejeitar" },
+      ],
+    });
+  }
+
+  private async handleNotification(
+    event: Extract<RuntimeStreamEvent, { type: "notification" }>,
+    chatId: string,
+  ): Promise<void> {
+    const label =
+      event.subtype === "todos"
+        ? "📝 Tarefas atualizadas"
+        : event.subtype === "task"
+          ? "🤖 Subagente em execução"
+          : "🔔 Notificação";
+    await this.deps.messenger.sendText(chatId, label);
+  }
+
+  async cancel(workspaceId: string): Promise<void> {
+    const entry = this.pool.get(workspaceId);
+    if (entry?.activeRun) {
+      await entry.activeRun.cancel();
+      if (entry.chatId) {
+        this.deps.interactionStore.clearForChat(entry.chatId);
+      }
+    }
+  }
+
   async resetWorkspace(workspaceId: string): Promise<void> {
     const entry = this.pool.get(workspaceId);
     if (entry) {
+      if (entry.chatId) this.deps.interactionStore.clearForChat(entry.chatId);
       await entry.agent.dispose();
       this.pool.delete(workspaceId);
     }
     await this.deps.session.clear(workspaceId);
   }
 
-  // text active runtext SDKAgent
   async dispose(): Promise<void> {
     for (const e of this.pool.values()) {
       try {
@@ -288,9 +511,9 @@ export class AgentOrchestrator {
       }
     }
     this.pool.clear();
+    this.deps.interactionStore.clearAll();
   }
 
-  // text agenttext SessionStore text agentId text resumetext create
   private async ensureAgent(
     workspaceId: string,
     cwd: string,
@@ -299,38 +522,33 @@ export class AgentOrchestrator {
     const cached = this.pool.get(workspaceId);
     if (cached) return cached;
 
-    // F-06text cached miss text agentCreate tokentext agent text
     if (this.deps.rateLimiter) {
-      const r = this.deps.rateLimiter.check(userId, "agentCreate");
+      const r = this.deps.rateLimiter.check(userId, "sessionCreate");
       if (!r.allowed) {
-        throw new RateLimitedError("agentCreate", r.retryAfterMs);
+        throw new RateLimitedError("sessionCreate", r.retryAfterMs);
       }
     }
 
     const sess = this.deps.session.get(workspaceId);
     let agent: RuntimeAgent;
-    if (sess?.agentId) {
-      // text@cursor/sdk 1.0.x text Agent.resume text modeltext
-      // text agent text modeltext sess.model + sess.modelParams text
-      // text /model text"text"textfallback text defaultModel text sesstextM1 text modeltext
-      const resumedModel = sess.model
-        ? { id: sess.model, params: sess.modelParams ?? [] }
-        : this.deps.defaultModel;
-      agent = await this.deps.runtime.resume(sess.agentId, {
-        cwd,
-        model: resumedModel,
-        sandboxOptions: this.deps.sandboxOptions,
-      });
+    if (sess?.sessionId) {
+      try {
+        agent = await this.deps.runtime.resume(sess.sessionId, { cwd });
+      } catch (e) {
+        logger.warn(
+          { err: (e as Error).message, sessionId: sess.sessionId, workspaceId },
+          "ACP session/load failed; creating new session",
+        );
+        await this.deps.session.clear(workspaceId);
+        agent = await this.deps.runtime.create({ cwd });
+        await this.deps.session.set(workspaceId, {
+          sessionId: agent.sessionId,
+        });
+      }
     } else {
-      agent = await this.deps.runtime.create({
-        cwd,
-        model: this.deps.defaultModel,
-        sandboxOptions: this.deps.sandboxOptions,
-      });
+      agent = await this.deps.runtime.create({ cwd });
       await this.deps.session.set(workspaceId, {
-        agentId: agent.agentId,
-        model: this.deps.defaultModel.id,
-        modelParams: this.deps.defaultModel.params,
+        sessionId: agent.sessionId,
       });
     }
     const entry: PoolEntry = { agent };

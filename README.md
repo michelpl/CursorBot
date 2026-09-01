@@ -1,15 +1,15 @@
 <h1 align="center">cursorbot</h1>
 
 <p align="center">
-  <b>Telegram &harr; Cursor SDK bridge</b><br/>
-  Drive Cursor agents on your local repos &mdash; from your phone.
+  <b>Telegram ↔ Cursor ACP bridge</b><br/>
+  Drive Cursor agents on your local repos — from your phone, with interactive approvals.
 </p>
 
 <p align="center">
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-%3E%3D20.10-43853d?logo=node.js&logoColor=white" alt="Node version"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://cursor.com/cn/docs/sdk/typescript"><img src="https://img.shields.io/badge/%40cursor%2Fsdk-1.0.x-7d56f4" alt="Cursor SDK"></a>
+  <a href="https://cursor.com/docs/cli/acp"><img src="https://img.shields.io/badge/Cursor-ACP-7d56f4" alt="Cursor ACP"></a>
   <img src="https://img.shields.io/badge/tests-141%20passing-brightgreen" alt="Tests"/>
 </p>
 
@@ -28,7 +28,7 @@
 
 Cursor's agent capability is amazing &mdash; but it lives **inside the IDE on your desk**. The moment you walk away, you also walk away from your agent.
 
-`cursorbot` is a tiny single-process service that runs on your dev machine and exposes Cursor agents through messengers you already carry: today **Telegram**, with **WeChat** and other channels in the roadmap. You text your bot, the bot drives Cursor agents on your local repos, the bot streams answers back. Everything runs on **your** hardware with **your** API keys &mdash; no third-party middleman.
+`cursorbot` is a single-process service that runs on your dev machine and exposes Cursor agents through Telegram via **ACP** (`agent acp`). You text your bot; the bot drives agents on your local repos and streams answers back. Approve tool calls, answer questions, and accept plans from inline buttons — all in Portuguese.
 
 > Walking the dog &mdash; tap **`/ws use myproj`** &rarr; **`fix the failing test on main`**. Two minutes later your home dev box has a clean test run waiting for you.
 
@@ -36,7 +36,7 @@ Cursor's agent capability is amazing &mdash; but it lives **inside the IDE on yo
 
 - text **End-to-end text conversation** &mdash; full Cursor agent capability (shell, edits, tools), with throttled streaming back to the chat (default 800ms)
 - text **Multi-workspace** &mdash; register many local repos and `/ws use <name>` to switch agents
-- text **Command system** &mdash; `/help` `/ws` `/reset` `/cancel` `/status` `/model` `/remind` and a `!<text>` interrupt prefix
+- text **Command system** &mdash; `/help` `/ws` `/reset` `/cancel` `/status` `/model` `/remind`, ACP modes `/plan` `/agent` `/ask`, and a `!<text>` interrupt prefix
 - text **Inbound images** &mdash; send a photo (or an album) to the bot, the agent receives and analyses them automatically
 - text **Outbound attachments** &mdash; the agent calls `cursorbot-attach-image /tmp/x.png` from inside its shell tool, the file is delivered to your chat
 - text **Reminders** &mdash; absolute, relative or daily times; either plain text reminders or "prompt-on-fire" reminders that auto-trigger the agent
@@ -102,12 +102,16 @@ Detailed step-by-step (with screenshots) in **[docs/PREREQUISITES.md](./docs/PRE
 | `/ws path` | Print current workspace path |
 | `/reset` | Reset agent for current workspace (destroy agent, clear stored agentId) |
 | `/cancel` | Cancel the current run gracefully |
-| `/status` | Show active agent / workspace / model |
+| `/status` | Show active workspace, ACP session, mode, and pending approved plan |
 | `/model <id>` | Switch the default model (next session) |
+| `/plan <task>` | Switch to plan mode and elaborate a plan |
+| `/agent` | Switch to agent mode only |
+| `/agent <prompt>` | Run a prompt in agent mode (use with approved plan: `/agent executar o plano`) |
+| `/ask <question>` | Run in ask mode (read-only) |
 | `/remind add text 10m drink water` | One-shot text reminder, fires in 10 minutes |
 | `/remind add prompt 09:00 check BTC price` | Daily-time prompt reminder, fires the agent for you |
 | `/remind list` / `/remind cancel <id>` | Manage active reminders |
-| _(plain message)_ | Sent as a prompt to the active workspace agent |
+| _(plain message)_ | Sent as a prompt; Cursor decides the session mode |
 | `!<text>` | **Interrupt** the running agent and start over with new text |
 
 ### Inbound images
@@ -140,7 +144,7 @@ Default timezone `Asia/Shanghai`, override with `reminders.timezone` in `config.
 | Entry | `src/bin/cursorbot.ts` |
 | Adapters | `src/adapters/telegram/` (grammy, implements `IMessenger`) |
 | Commands | `src/commands/` (parser + dispatcher + handlers) |
-| Orchestrator core | `src/core/orchestrator/` (`AgentOrchestrator` + `StreamRenderer` + busy-policy + `cursorSdkRuntime`) |
+| Orchestrator core | `src/core/orchestrator/` (`AgentOrchestrator` + `StreamRenderer` + `acpRuntime`) |
 | Workspace / session / access | `src/core/{workspace,session,access}/` |
 | Reminders / attachments | `src/core/{reminders,attachments}/` |
 | Persistence | `src/core/persist/jsonStore.ts` |

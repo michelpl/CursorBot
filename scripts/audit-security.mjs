@@ -1,18 +1,9 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
-// F-04textnpm audit gate allowlist
-// text F-02 text Accepted-Risk text undici text
-// text moderate/high/critical vulnerability text CI text
-
-const ALLOWED_NAMES = new Set(["undici", "@connectrpc/connect-node", "@cursor/sdk"]);
-const ALLOWED_SOURCES = new Set([
-  1112496, // GHSA-g9mf-h72j-4rw9
-  1114594, // GHSA-2mjp-6q6p-2qxm
-  1114638, // GHSA-vrm6-8vpv-qv8q
-  1114640, // GHSA-v9p9-hfj2-hcw8
-  1114642, // GHSA-4992-7rv2-5pvq
-]);
+const ALLOWED_NAMES = new Set(["undici", "@connectrpc/connect-node"]);
+const ALLOWED_SOURCES = new Set([1112496, 1114594, 1114638, 1114640, 1114642]);
 const BLOCKING_SEVERITIES = new Set(["moderate", "high", "critical"]);
 
 export function evaluateAudit(auditJson) {
@@ -79,6 +70,6 @@ function runCli() {
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   runCli();
 }

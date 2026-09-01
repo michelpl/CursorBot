@@ -46,3 +46,15 @@ export interface FilePayload {
   mimeType?: string;
   filename: string;
 }
+
+export interface InteractiveButton {
+  id: string;
+  label: string;
+}
+
+export interface IncomingCallbackQuery {
+  chatId: string;
+  userId: number;
+  callbackQueryId: string;
+  data: string;
+}

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (breaking — v0.2.0)
+- **SDK → ACP migration**: runtime uses Cursor CLI `agent acp` via JSON-RPC stdio instead of `@cursor/sdk`
+- Interactive Telegram UI for permissions, questions, and plans (inline keyboards)
+- UI strings in Portuguese; default timezone `America/Sao_Paulo`
+- `sessionId` replaces `agentId` in session store; `/model` is documented no-op with ACP
+
+### Removed
+- `@cursor/sdk` dependency and `cursorSdkRuntime.ts`
+- `cursor.sandboxOptions`, `defaultModel`, `settingSources` config fields
+
+## [0.2.0] — 2026-08-31
+
+### Changed
+- See [Unreleased] above — full ACP cutover release.
+
 ### Planned (M3)
 - WeChat adapter skeleton (validates `IMessenger` extensibility &mdash; multi-platform was the M2 design driver)
 - Clawfox browser integration

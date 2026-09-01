@@ -6,24 +6,24 @@
   },
   "cursor": {
     "apiKey": "REPLACE_OR_SET_CURSOR_API_KEY_ENV",
-    "defaultModel": { "id": "default", "params": [] },
-    "settingSources": ["project", "user"],
-    "sandboxOptions": { "enabled": true }
+    "agentCliPath": "agent",
+    "acpMode": "agent",
+    "interactionTimeoutMs": 300000
   },
   "workspaces": { "autoRegisterCwd": true, "allowedRoots": [] },
   "paths": { "dataDir": "./data" },
   "logging": { "level": "info" },
-  "reminders": { "timezone": "Asia/Shanghai", "maxAheadDays": 30 },
+  "reminders": { "timezone": "America/Sao_Paulo", "maxAheadDays": 30 },
   "attachments": { "maxFileSizeBytes": 20971520, "maxAttachmentsPerFlush": 10, "maxRetries": 3 },
   "images": {
     "maxImagesPerPrompt": 8,
-    "defaultPromptSingle": "text",
-    "defaultPromptMulti": "text",
+    "defaultPromptSingle": "Analise esta imagem e descreva o que você vê.",
+    "defaultPromptMulti": "Analise estas imagens e descreva o que você vê.",
     "mediaGroupDebounceMs": 800
   },
   "rateLimit": {
     "message": { "capacity": 4, "refillPerSec": 2 },
-    "agentCreate": { "capacity": 10, "refillPerSec": 0.1667 },
+    "sessionCreate": { "capacity": 10, "refillPerSec": 0.1667 },
     "reminders": { "maxPerUser": 100 }
   }
 }

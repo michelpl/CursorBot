@@ -23,38 +23,24 @@ export interface RemindContext {
   reminderQuota: ReminderQuota;
 }
 
-const USAGE = `text
-/remind add text   <text> <text>
-/remind add prompt <text> <prompt>
+const USAGE = `Uso:
+/remind add text   <quando> <texto>
+/remind add prompt <quando> <prompt>
 /remind list
 /remind del <id>
 
-text (10m, 1h30m) | text HH:MM | YYYY-MM-DDTHH:MM`;
+Formatos: 10m, 1h30m | HH:MM | YYYY-MM-DDTHH:MM`;
 
-/**
- * /remind text
- * - addtext kind / text / bodytext scheduler.add
- * - listtext scheduler.list() text
- * - deltextscheduler.remove(id)
- *
- * text tokentext `2026-05-06 09:00` text
- * text `2026-05-06T09:00` text T text
- */
 export async function handleRemind(
   args: string[],
   rest: string,
   ctx: RemindContext,
 ): Promise<void> {
   const sub = args[0];
-  // dispatch text rest text "add text 1h text"text
-  // text sub text handleAdd text fullRest text "text 1h text"text
-  // text args.slice(1) text stripLeading text sub text bodytext
   const restAfterSub = sub ? stripFirstToken(rest, sub) : rest;
   if (sub === "add") return handleAdd(args.slice(1), restAfterSub, ctx);
   if (sub === "list") return handleList(ctx);
   if (sub === "del") return handleDel(args.slice(1), ctx);
-  // text"text/text"text plain parseModetextUSAGE text <text> text
-  // text HTML parseMode textTelegram text 400text
   await ctx.messenger.sendText(ctx.chatId, USAGE, { parseMode: "plain" });
 }
 
@@ -73,10 +59,9 @@ async function handleAdd(
     await ctx.messenger.sendText(ctx.chatId, USAGE, { parseMode: "plain" });
     return;
   }
-  // body text tokentexttext|prompt + text
   const body = stripLeading(fullRest, kind, expr);
   if (!body) {
-    await ctx.messenger.sendText(ctx.chatId, "text\n" + USAGE, {
+    await ctx.messenger.sendText(ctx.chatId, "Corpo do lembrete vazio.\n" + USAGE, {
       parseMode: "plain",
     });
     return;
@@ -90,7 +75,7 @@ async function handleAdd(
   if (parsed.error || !parsed.at) {
     await ctx.messenger.sendText(
       ctx.chatId,
-      `text text ${parsed.error ?? "text"}text${expr}`,
+      `Horário inválido: ${parsed.error ?? "desconhecido"} (${expr})`,
     );
     return;
   }
@@ -113,7 +98,7 @@ async function handleAdd(
     if (!ws) {
       await ctx.messenger.sendText(
         ctx.chatId,
-        "text workspacetext /ws use text /remind add prompttext",
+        "Nenhum workspace ativo. Use /ws use antes de /remind add prompt.",
       );
       return;
     }
@@ -139,7 +124,7 @@ async function handleAdd(
       );
       await ctx.messenger.sendText(
         ctx.chatId,
-        `Reminder text${e.used}/${e.cap}text /remind del text`,
+        `Limite de lembretes atingido (${e.used}/${e.cap}). Use /remind del para remover.`,
         { parseMode: "plain" },
       );
       return;
@@ -148,14 +133,14 @@ async function handleAdd(
   }
   await ctx.messenger.sendText(
     ctx.chatId,
-    `text ${id}text ${new Date(parsed.at).toISOString()} text`,
+    `Lembrete ${id} agendado para ${new Date(parsed.at).toISOString()}.`,
   );
 }
 
 async function handleList(ctx: RemindContext): Promise<void> {
   const items = ctx.scheduler.list();
   if (items.length === 0) {
-    await ctx.messenger.sendText(ctx.chatId, "text remindertext");
+    await ctx.messenger.sendText(ctx.chatId, "Nenhum lembrete agendado.");
     return;
   }
   const lines = items
@@ -164,7 +149,7 @@ async function handleList(ctx: RemindContext): Promise<void> {
       const when = new Date(r.at).toISOString();
       const summary =
         r.kind === "text"
-          ? `text: ${escapeHtml(r.text)}`
+          ? `texto: ${escapeHtml(r.text)}`
           : `prompt[${escapeHtml(r.workspaceId)}]: ${escapeHtml(r.prompt)}`;
       return `${escapeHtml(r.id)}  ${when}\n  ${summary}`;
     });
@@ -174,19 +159,15 @@ async function handleList(ctx: RemindContext): Promise<void> {
 async function handleDel(rest: string[], ctx: RemindContext): Promise<void> {
   const id = rest[0];
   if (!id) {
-    await ctx.messenger.sendText(ctx.chatId, "text/remind del <id>", {
+    await ctx.messenger.sendText(ctx.chatId, "Uso: /remind del <id>", {
       parseMode: "plain",
     });
     return;
   }
   await ctx.scheduler.remove(id);
-  await ctx.messenger.sendText(
-    ctx.chatId,
-    `text ${escapeHtml(id)}text`,
-  );
+  await ctx.messenger.sendText(ctx.chatId, `Lembrete ${escapeHtml(id)} removido.`);
 }
 
-// text fullRest text kind / expr text token text
 function stripLeading(rest: string, kind: string, expr: string): string {
   let s = rest.trimStart();
   if (s.startsWith(kind)) s = s.slice(kind.length).trimStart();
@@ -194,7 +175,6 @@ function stripLeading(rest: string, kind: string, expr: string): string {
   return s;
 }
 
-// text rest text token text stripLeading text handleRemind text subtext
 function stripFirstToken(rest: string, token: string): string {
   const s = rest.trimStart();
   if (s.startsWith(token)) return s.slice(token.length).trimStart();
