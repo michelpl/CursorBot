@@ -35,7 +35,7 @@ describe("/ws add allowedRoots", () => {
     expect(registry.get("x")).toBeUndefined();
     expect(
       messenger.sentTexts.some((m) =>
-        m.text.includes("permitidos"),
+        m.text.includes("allowed"),
       ),
     ).toBe(true);
   });

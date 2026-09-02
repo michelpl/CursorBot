@@ -103,7 +103,7 @@ describe("AttachmentDispatcher", () => {
     // text 3 text maxRetries=2text + text
     await d.flushForCwd("/w", "chat-1");
     expect(
-      messenger.sentTexts.some((t) => t.text.includes("Falha ao enviar")),
+      messenger.sentTexts.some((t) => t.text.includes("Failed to send attachment")),
     ).toBe(true);
     expect((await queue.readAll()).length).toBe(0);
   });

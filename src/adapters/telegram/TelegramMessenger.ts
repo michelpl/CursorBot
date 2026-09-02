@@ -255,7 +255,7 @@ export class TelegramMessenger implements IMessenger {
   }
 
   private requireBot(): GrammyBot {
-    if (!this.bot) throw new Error("TelegramMessenger não iniciado");
+    if (!this.bot) throw new Error("TelegramMessenger not started");
     return this.bot;
   }
 

@@ -141,7 +141,7 @@ export class AttachmentDispatcher {
         try {
           await this.opts.messenger.sendText(
             chatId,
-            `Falha ao enviar anexo após ${attempt} tentativas: ${pickName(e.path)}`,
+            `Failed to send attachment after ${attempt} attempts: ${pickName(e.path)}`,
           );
         } catch {
           /* sendText text flush text entry text drop */

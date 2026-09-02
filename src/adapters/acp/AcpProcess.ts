@@ -115,8 +115,8 @@ export class AcpProcess implements LineTransport {
         );
         fail(
           new Error(
-            `Não foi possível iniciar o CLI ACP (${this.resolvedPath}): ${err.message}. ` +
-              "Defina cursor.agentCliPath com o caminho completo para agent.cmd.",
+            `Failed to start the ACP CLI (${this.resolvedPath}): ${err.message}. ` +
+              "Set cursor.agentCliPath to the full path of agent.cmd.",
           ),
         );
       });
@@ -140,8 +140,8 @@ export class AcpProcess implements LineTransport {
           if (!settled) {
             fail(
               new Error(
-                `CLI ACP encerrou com código ${code}. ` +
-                  (stderrBuf.trim() || "Verifique cursor.agentCliPath e CURSOR_API_KEY."),
+                `ACP CLI exited with code ${code}. ` +
+                  (stderrBuf.trim() || "Check cursor.agentCliPath and CURSOR_API_KEY."),
               ),
             );
           }

@@ -72,7 +72,7 @@ describe("AgentOrchestrator modes", () => {
     await p;
     expect(agent.modeChanges).toEqual(["plan"]);
     expect(
-      messenger.sentTexts.some((t) => t.text.includes("Plano concluído")),
+      messenger.sentTexts.some((t) => t.text.includes("Plan complete")),
     ).toBe(true);
     await orch.dispose();
   });

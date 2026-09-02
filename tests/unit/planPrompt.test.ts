@@ -7,7 +7,7 @@ import {
 
 describe("planPrompt", () => {
   it("detects execution keywords", () => {
-    expect(shouldInjectApprovedPlan("executar o plano")).toBe(true);
+    expect(shouldInjectApprovedPlan("execute the plan")).toBe(true);
     expect(shouldInjectApprovedPlan("run plan now")).toBe(true);
     expect(shouldInjectApprovedPlan("hello")).toBe(false);
     expect(shouldInjectApprovedPlan("go --plan")).toBe(true);
@@ -18,9 +18,9 @@ describe("planPrompt", () => {
   });
 
   it("builds execution prompt with plan body", () => {
-    const out = buildExecutionPrompt("executar", "# Plan\nstep 1");
+    const out = buildExecutionPrompt("execute", "# Plan\nstep 1");
     expect(out).toContain("# Plan");
-    expect(out).toContain("executar");
+    expect(out).toContain("execute");
     expect(out).toContain("APPROVED PLAN");
   });
 });

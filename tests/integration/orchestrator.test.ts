@@ -111,7 +111,7 @@ describe("AgentOrchestrator", () => {
     const p2 = orch.runPrompt({ chatId: "c1", text: "second", force: false, userId: 0 });
     await Promise.all([p1, p2]);
     const sends = messenger.calls.filter((c) => c.kind === "sendText");
-    expect(sends.some((c) => c.kind === "sendText" && c.text.includes("ocupado"))).toBe(
+    expect(sends.some((c) => c.kind === "sendText" && c.text.includes("busy"))).toBe(
       true,
     );
   });
@@ -128,7 +128,7 @@ describe("AgentOrchestrator", () => {
       .reverse()
       .find((c) => c.kind === "editText");
     const txt = lastEdit && lastEdit.kind === "editText" ? lastEdit.text : "";
-    expect(txt).toMatch(/cancelado/i);
+    expect(txt).toMatch(/cancelled/i);
   });
 
   it("sends interactive message on permission_request", async () => {
@@ -167,8 +167,8 @@ describe("AgentOrchestrator", () => {
       .map((c) => (c.kind === "editText" ? c.text : ""))
       .join("\n");
     expect(allTexts).toContain("shell: ls");
-    expect(allTexts).toContain("Atividade");
-    expect(allTexts).toContain("shell concluído");
+    expect(allTexts).toContain("Activity");
+    expect(allTexts).toContain("shell completed");
   });
 
   it("keeps an escaped activity trail visible after the answer", async () => {
@@ -187,9 +187,9 @@ describe("AgentOrchestrator", () => {
       .reverse()
       .find((c) => c.kind === "editText");
     const text = finalEdit && finalEdit.kind === "editText" ? finalEdit.text : "";
-    expect(text).toContain("Cursor iniciado");
+    expect(text).toContain("Cursor started");
     expect(text).toContain("echo &lt;unsafe&gt;");
-    expect(text).toContain("Finalizado");
+    expect(text).toContain("Finished");
     expect(text).toContain("done");
   });
 });

@@ -1,6 +1,6 @@
-# Contributing to cursorbot
+# Contributing to Cursor Supervisor
 
-Thank you for considering a contribution! cursorbot is a small, opinionated project. The contribution loop is intentionally tight; please skim this once before opening your first PR.
+Thank you for considering a contribution! Cursor Supervisor is a small, opinionated project. The contribution loop is intentionally tight; please skim this once before opening your first PR.
 
 - [Quick loop](#quick-loop)
 - [Development setup](#development-setup)
@@ -34,15 +34,15 @@ PRs that don't run all four checks (`test` / `typecheck` / `lint` / formatting) 
 See **[docs/INSTALL.md](../docs/INSTALL.md)** for the full path. TL;DR:
 
 ```bash
-git clone https://github.com/michelpl/CursorBot.git
-cd cursorbot
+git clone https://github.com/michelpl/cursor-supervisor.git
+cd cursor-supervisor
 npm install
 cp config.example.json config.json   # not required for unit tests, but you'll want it eventually
 ```
 
 ## Test-driven workflow (mandatory)
 
-cursorbot is developed strictly TDD. Every behavioural change starts with a failing test:
+cursor-supervisor is developed strictly TDD. Every behavioural change starts with a failing test:
 
 1. **RED** &mdash; Write the smallest test that captures the desired behaviour. `npm test` should now show one new failure.
 2. **GREEN** &mdash; Write the smallest implementation that makes the test pass. Don't refactor yet.

@@ -1,16 +1,21 @@
 # Changelog
 
-All notable changes to **cursorbot** are documented in this file.
+All notable changes to **Cursor Supervisor** are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Renamed the product from cursorbot / CursorBot to **Cursor Supervisor** (CLI `cursor-supervisor`, extension `michelpl.cursor-supervisor`).
+- User-facing strings (Telegram, CLI, IDE) are English.
+- Cursor IDE extension bundles the Telegram ACP service for Open VSX / Cursor marketplace packaging.
+
 ### Changed (breaking — v0.2.0)
 - **SDK → ACP migration**: runtime uses Cursor CLI `agent acp` via JSON-RPC stdio instead of `@cursor/sdk`
 - Interactive Telegram UI for permissions, questions, and plans (inline keyboards)
-- UI strings in Portuguese; default timezone `America/Sao_Paulo`
+- Default timezone `America/Sao_Paulo`
 - `sessionId` replaces `agentId` in session store; `/model` is documented no-op with ACP
 
 ### Removed
@@ -142,5 +147,5 @@ First milestone release. Covers **M0 (scaffold)**, **M1 (text e2e)**, **M2 (atta
   - `docs/superpowers/plans/2026-05-05-cursorbot-m2.md`
   - `docs/superpowers/plans/2026-05-06-streamrenderer-markdown.md`
 
-[Unreleased]: https://github.com/michelpl/CursorBot/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/michelpl/cursor-supervisor/compare/v0.2.0...HEAD
 [0.1.0]: https://github.com/michelpl/CursorBot/releases/tag/v0.1.0

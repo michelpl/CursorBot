@@ -53,7 +53,7 @@ describe("attach CLItextspawntext", () => {
   ): Promise<{ stdout: string; stderr: string }> {
     return exec(NODE, ARGS(entry, ...rest), {
       cwd: workDir,
-      env: { ...process.env, CURSORBOT_DATA_DIR: dataDir },
+      env: { ...process.env, CURSOR_SUPERVISOR_DATA_DIR: dataDir },
     });
   }
 

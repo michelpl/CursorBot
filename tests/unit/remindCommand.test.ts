@@ -62,12 +62,12 @@ describe("/remind", () => {
 
   it("/remind add missing kind shows usage", async () => {
     await handleRemind(["add"], "", ctx());
-    expect(messenger.sentTexts.some((m) => m.text.includes("Uso"))).toBe(true);
+    expect(messenger.sentTexts.some((m) => m.text.includes("Usage"))).toBe(true);
   });
 
   it("/remind add invalid time shows error", async () => {
     await handleRemind(["add", "text", "abcd", "x"], "abcd x", ctx());
-    expect(messenger.sentTexts.some((m) => m.text.includes("Horário inválido"))).toBe(
+    expect(messenger.sentTexts.some((m) => m.text.includes("Invalid time"))).toBe(
       true,
     );
     expect(
@@ -78,7 +78,7 @@ describe("/remind", () => {
 
   it("/remind list empty shows message", async () => {
     await handleRemind(["list"], "", ctx());
-    expect(messenger.sentTexts.some((m) => /lembrete/i.test(m.text))).toBe(true);
+    expect(messenger.sentTexts.some((m) => /reminder/i.test(m.text))).toBe(true);
   });
 
   it("/remind del r-1 text scheduler.remove text", async () => {

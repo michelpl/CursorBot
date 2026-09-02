@@ -10,6 +10,7 @@ This document covers the four supported installation paths in detail. If you jus
 - [Optional: install attach CLI globally](#optional-install-attach-cli-globally)
 - [Verify the install](#verify-the-install)
 - [Run as a long-lived service](#run-as-a-long-lived-service)
+- [Cursor IDE extension](#cursor-ide-extension)
 
 ## System requirements
 
@@ -31,8 +32,8 @@ brew install node@22
 brew link --force --overwrite node@22
 
 # 2. Clone & install
-git clone https://github.com/michelpl/CursorBot.git
-cd cursorbot
+git clone https://github.com/michelpl/cursor-supervisor.git
+cd cursor-supervisor
 npm install
 
 # 3. Configure
@@ -56,8 +57,8 @@ nvm install 22
 nvm use 22
 
 # 2. Clone & install
-git clone https://github.com/michelpl/CursorBot.git
-cd cursorbot
+git clone https://github.com/michelpl/cursor-supervisor.git
+cd cursor-supervisor
 npm install
 
 # 3. Configure (same as macOS)
@@ -85,8 +86,8 @@ node --version    # should print v20.10+ or v22.x
 npm --version
 
 # 2. Clone & install
-git clone https://github.com/michelpl/CursorBot.git
-cd cursorbot
+git clone https://github.com/michelpl/cursor-supervisor.git
+cd cursor-supervisor
 npm install
 
 # 3. Configure
@@ -105,9 +106,9 @@ npm run dev
 
 ### Windows-specific gotchas
 
-- The `bin` field in `package.json` (`cursorbot`, `cursorbot-attach-image`, `cursorbot-attach-file`) is installed by npm as a `.cmd` shim plus a Bash launcher. Both work from PowerShell and CMD.
-- The agent's shell tool runs `cmd.exe` by default on Windows, so any examples that say `bash`-style command substitution may need translating. cursorbot itself does not assume bash.
-- `tsx watch` on native Windows occasionally misses file rewrites done by editors that use `move` instead of `write` (VSCode is fine; some editors are not). If you see `npm run dev` not reloading, try `tsx --watch --watch-mode=poll src/bin/cursorbot.ts`.
+- The `bin` field in `package.json` (`cursor-supervisor`, `cursor-supervisor-attach-image`, `cursor-supervisor-attach-file`) is installed by npm as a `.cmd` shim plus a Bash launcher. Both work from PowerShell and CMD.
+- The agent's shell tool runs `cmd.exe` by default on Windows, so any examples that say `bash`-style command substitution may need translating. cursor-supervisor itself does not assume bash.
+- `tsx watch` on native Windows occasionally misses file rewrites done by editors that use `move` instead of `write` (VSCode is fine; some editors are not). If you see `npm run dev` not reloading, try `tsx --watch --watch-mode=poll src/bin/cursor-supervisor.ts`.
 - Long paths: enable Win32 long-path support if your repo lives deep inside `C:\Users\<you>\OneDrive\...`.
 
 ## WSL2 (Windows + Ubuntu)
@@ -124,7 +125,7 @@ Then **inside the Ubuntu shell**, follow the [Linux steps](#linux) above as norm
 
 ## Optional: install attach CLI globally
 
-The agent's shell tool calls `cursorbot-attach-image` / `cursorbot-attach-file` to send files back to your chat. These bins ship inside the cursorbot package, but to make them available on the agent's `PATH`, do **one** of:
+The agent's shell tool calls `cursor-supervisor-attach-image` / `cursor-supervisor-attach-file` to send files back to your chat. These bins ship inside the cursor-supervisor package, but to make them available on the agent's `PATH`, do **one** of:
 
 ```bash
 # A. Build the project, then link locally (recommended for dev)
@@ -136,14 +137,14 @@ npm run build
 npm install -g .
 ```
 
-Both put `cursorbot-attach-image` / `cursorbot-attach-file` on your `PATH`. Verify:
+Both put `cursor-supervisor-attach-image` / `cursor-supervisor-attach-file` on your `PATH`. Verify:
 
 ```bash
-cursorbot-attach-image --help
-cursorbot-attach-file --help
+cursor-supervisor-attach-image --help
+cursor-supervisor-attach-file --help
 ```
 
-> The CLIs locate cursorbot's data directory through `<workspace>/.cursorbot/data-dir.txt`, written automatically when an agent starts. If that breakcrumb is missing, set `CURSORBOT_DATA_DIR=/path/to/cursorbot/data` explicitly.
+> The CLIs locate Cursor Supervisor's data directory through `<workspace>/\.cursor-supervisor/data-dir.txt`, written automatically when an agent starts. If that breakcrumb is missing, set `CURSOR_SUPERVISOR_DATA_DIR=/path/to/cursor-supervisor/data` explicitly.
 
 ## Verify the install
 
@@ -180,3 +181,12 @@ For 24/7 operation, hand the process to a supervisor:
 - **Cross-platform** &mdash; [`pm2`](./DEPLOYMENT.md#pm2-cross-platform)
 - **macOS** &mdash; [`launchd` user agent](./DEPLOYMENT.md#macos--launchd-user-agent)
 - **Windows** &mdash; [NSSM (Node as Windows Service)](./DEPLOYMENT.md#windows--nssm)
+
+## Cursor IDE extension
+
+The marketplace-ready extension bundles the Telegram service. See [EXTENSION.md](./EXTENSION.md) and [MARKETPLACE.md](./MARKETPLACE.md).
+
+```bash
+npm run extension:package
+```
+

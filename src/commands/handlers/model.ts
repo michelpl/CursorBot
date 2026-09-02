@@ -9,19 +9,19 @@ export async function handleModel(
   if (!id) {
     await ctx.messenger.sendText(
       ctx.chatId,
-      "Com ACP, o modelo é definido pelo Cursor CLI.\nUso legado: /model <id> (sem efeito).",
+      "With ACP, the model is set by the Cursor CLI.\nLegacy usage: /model <id> (no effect).",
       { parseMode: "plain" },
     );
     return;
   }
   const w = ctx.registry.getActive();
   if (!w) {
-    await ctx.messenger.sendText(ctx.chatId, "Nenhum workspace ativo.");
+    await ctx.messenger.sendText(ctx.chatId, "No active workspace.");
     return;
   }
   await ctx.messenger.sendText(
     ctx.chatId,
-    `Com ACP, <code>${id}</code> não altera o modelo em runtime. Configure no Cursor CLI.`,
+    `With ACP, <code>${id}</code> does not change the model at runtime. Configure it in the Cursor CLI.`,
     { parseMode: "HTML" },
   );
 }

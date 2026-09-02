@@ -17,8 +17,8 @@
   "attachments": { "maxFileSizeBytes": 20971520, "maxAttachmentsPerFlush": 10, "maxRetries": 3 },
   "images": {
     "maxImagesPerPrompt": 8,
-    "defaultPromptSingle": "Analise esta imagem e descreva o que você vê.",
-    "defaultPromptMulti": "Analise estas imagens e descreva o que você vê.",
+    "defaultPromptSingle": "Analyze this image and describe what you see.",
+    "defaultPromptMulti": "Analyze these images and describe what you see.",
     "mediaGroupDebounceMs": 800
   },
   "rateLimit": {

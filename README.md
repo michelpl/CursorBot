@@ -1,8 +1,8 @@
-<h1 align="center">cursorbot</h1>
+<h1 align="center">Cursor Supervisor</h1>
 
 <p align="center">
   <b>Telegram ↔ Cursor ACP bridge</b><br/>
-  Drive Cursor agents on your local repos — from your phone, with interactive approvals.
+  Drive Cursor agents on your local repos from your phone, with interactive approvals.
 </p>
 
 <p align="center">
@@ -10,219 +10,131 @@
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://cursor.com/docs/cli/acp"><img src="https://img.shields.io/badge/Cursor-ACP-7d56f4" alt="Cursor ACP"></a>
-  <img src="https://img.shields.io/badge/tests-141%20passing-brightgreen" alt="Tests"/>
-</p>
-
-<p align="center">
-  <b>English</b> &nbsp;text&nbsp;
-  <a href="./README.zh-CN.md">text</a>
-</p>
-
-<p align="center">
-  <i>(screenshot &mdash; TBD: replace with <code>docs/screenshots/hero.png</code>)</i>
 </p>
 
 ---
 
-## Why cursorbot
+## Why Cursor Supervisor
 
-Cursor's agent capability is amazing &mdash; but it lives **inside the IDE on your desk**. The moment you walk away, you also walk away from your agent.
+Cursor's agent lives **inside the IDE**. Cursor Supervisor is a local service that exposes those agents through Telegram via **ACP** (`agent acp`). You text the bot; it drives agents on your machine and streams answers back. Approve tool calls, answer questions, and accept plans from inline buttons.
 
-`cursorbot` is a single-process service that runs on your dev machine and exposes Cursor agents through Telegram via **ACP** (`agent acp`). You text your bot; the bot drives agents on your local repos and streams answers back. Approve tool calls, answer questions, and accept plans from inline buttons — all in Portuguese.
-
-> Walking the dog &mdash; tap **`/ws use myproj`** &rarr; **`fix the failing test on main`**. Two minutes later your home dev box has a clean test run waiting for you.
+Install the **Cursor IDE extension** from the marketplace (Open VSX) or run the CLI from this repo.
 
 ## Features
 
-- text **End-to-end text conversation** &mdash; full Cursor agent capability (shell, edits, tools), with throttled streaming back to the chat (default 800ms)
-- text **Multi-workspace** &mdash; register many local repos and `/ws use <name>` to switch agents
-- text **Command system** &mdash; `/help` `/ws` `/reset` `/cancel` `/status` `/model` `/remind`, ACP modes `/plan` `/agent` `/ask`, and a `!<text>` interrupt prefix
-- text **Inbound images** &mdash; send a photo (or an album) to the bot, the agent receives and analyses them automatically
-- text **Outbound attachments** &mdash; the agent calls `cursorbot-attach-image /tmp/x.png` from inside its shell tool, the file is delivered to your chat
-- text **Reminders** &mdash; absolute, relative or daily times; either plain text reminders or "prompt-on-fire" reminders that auto-trigger the agent
-- text **Allow-list access control** &mdash; only the Telegram user IDs you list can talk to the bot; everyone else is silently dropped
-- text **Cancel & interrupt** &mdash; soft `/cancel`, hard `!new prompt`
-- text **Service-friendly** &mdash; clean `SIGTERM` handling, suitable for `systemd` / `pm2` / `launchd`
-- text **TDD-first** &mdash; 141+ unit & integration tests, full `IMessenger` / `IAgentRuntime` abstractions so the orchestrator never knows about Telegram or the Cursor SDK directly
+- End-to-end text conversation with throttled streaming
+- Multi-workspace (`/ws use <name>`)
+- Commands: `/help` `/ws` `/reset` `/cancel` `/status` `/model` `/remind`, ACP modes `/plan` `/agent` `/ask`, and `!<text>` interrupt
+- Inbound photos and albums
+- Outbound attachments via `cursor-supervisor-attach-image` / `cursor-supervisor-attach-file`
+- Reminders (absolute, relative, or daily)
+- Allow-list access control
+- Single-instance lock (`data/service.json`) for CLI, systemd/pm2, and the IDE extension
 
-## Quickstart (60 seconds)
+## Quickstart
 
-> Need a more detailed walkthrough? See **[docs/INSTALL.md](./docs/INSTALL.md)**.
-
-### macOS / Linux / WSL2
+See **[docs/INSTALL.md](./docs/INSTALL.md)** for the full walkthrough.
 
 ```bash
-git clone https://github.com/michelpl/CursorBot.git
-cd cursorbot
+git clone https://github.com/michelpl/cursor-supervisor.git
+cd cursor-supervisor
 npm install
 cp config.example.json config.json
-# Edit config.json (botToken, allowedUserIds, apiKey) -- or use env vars below
+# Edit botToken, allowedUserIds, apiKey — or set TELEGRAM_BOT_TOKEN and CURSOR_API_KEY
 
-export TELEGRAM_BOT_TOKEN="123456:abcdef..."
-export CURSOR_API_KEY="key_..."
 npm run dev
 ```
 
-### Windows (PowerShell, native)
+Open Telegram, message your bot, type `/start`.
 
-```powershell
-git clone https://github.com/michelpl/CursorBot.git
-cd cursorbot
-npm install
-Copy-Item config.example.json config.json
-# Edit config.json (botToken, allowedUserIds, apiKey) -- or use env vars below
+### Cursor IDE extension
 
-$env:TELEGRAM_BOT_TOKEN = "123456:abcdef..."
-$env:CURSOR_API_KEY     = "key_..."
-npm run dev
+The extension **bundles the Telegram service**. After install, open a workspace, run **Cursor Supervisor: Start**, and complete the first-run setup if `config.json` is missing.
+
+Requirements: **Node.js ≥ 20.10** on PATH and the Cursor **agent CLI**.
+
+Local development:
+
+```bash
+npm run build
+npm run extension:build
+# F5 — Run Cursor Supervisor Extension
 ```
 
-Open Telegram &rarr; private chat with your bot &rarr; type `/start` &rarr; you should see a welcome message.
+Package a VSIX (does not publish):
+
+```bash
+npm run extension:package
+```
+
+See **[docs/EXTENSION.md](./docs/EXTENSION.md)** and **[docs/MARKETPLACE.md](./docs/MARKETPLACE.md)**.
 
 ## Prerequisites
 
 | Requirement | How to get it |
 | --- | --- |
-| Node.js **>= 20.10** | <https://nodejs.org/> |
-| **Telegram bot token** | Talk to [@BotFather](https://t.me/BotFather) &rarr; `/newbot` &rarr; copy token |
-| **Telegram user ID** (your own) | Send `/start` to [@userinfobot](https://t.me/userinfobot) &rarr; copy numeric ID into `telegram.allowedUserIds` |
-| **Cursor API key** | <https://cursor.com/cn/docs/sdk/typescript> &rarr; settings &rarr; API keys |
+| Node.js **>= 20.10** | https://nodejs.org/ |
+| Telegram bot token | [@BotFather](https://t.me/BotFather) → `/newbot` |
+| Your Telegram user ID | [@userinfobot](https://t.me/userinfobot) → `telegram.allowedUserIds` |
+| Cursor API key | Cursor Settings or `agent login` |
 
-Detailed step-by-step (with screenshots) in **[docs/PREREQUISITES.md](./docs/PREREQUISITES.md)**.
+Details: **[docs/PREREQUISITES.md](./docs/PREREQUISITES.md)**.
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
 | `/help` | Show help |
-| `/ws list` | List registered workspaces |
-| `/ws use <name>` | Switch active workspace |
-| `/ws add <name> <abs-path>` | Register a workspace |
-| `/ws remove <name>` | Unregister a workspace |
-| `/ws path` | Print current workspace path |
-| `/reset` | Reset agent for current workspace (destroy agent, clear stored agentId) |
-| `/cancel` | Cancel the current run gracefully |
-| `/status` | Show active workspace, ACP session, mode, and pending approved plan |
-| `/model <id>` | Switch the default model (next session) |
-| `/plan <task>` | Switch to plan mode and elaborate a plan |
-| `/agent` | Switch to agent mode only |
-| `/agent <prompt>` | Run a prompt in agent mode (use with approved plan: `/agent executar o plano`) |
-| `/ask <question>` | Run in ask mode (read-only) |
-| `/remind add text 10m drink water` | One-shot text reminder, fires in 10 minutes |
-| `/remind add prompt 09:00 check BTC price` | Daily-time prompt reminder, fires the agent for you |
-| `/remind list` / `/remind cancel <id>` | Manage active reminders |
-| _(plain message)_ | Sent as a prompt; Cursor decides the session mode |
-| `!<text>` | **Interrupt** the running agent and start over with new text |
+| `/ws list` / `/ws use` / `/ws add` / `/ws remove` / `/ws path` | Workspaces |
+| `/reset` | Reset the ACP session |
+| `/cancel` | Cancel the current run |
+| `/status` | Workspace, session, mode, approved plan |
+| `/model <id>` | Documented no-op (model is set in the Cursor CLI) |
+| `/plan <task>` | Plan mode |
+| `/agent` / `/agent <prompt>` | Agent mode (`/agent execute the plan` uses a saved plan) |
+| `/ask <question>` | Ask mode (read-only) |
+| `/remind …` | Reminders |
+| `!<text>` | Interrupt and start a new prompt |
 
-### Inbound images
-
-Send a photo (or an album of up to 8) to the bot. They are bundled together with an optional caption and forwarded to the agent. Defaults: 8 images per prompt, 800ms album debounce. Configurable in `config.json` under `images.*`.
-
-### Outbound attachments
-
-Inside its shell tool, the agent can call:
+Attachments from the agent shell:
 
 ```bash
-cursorbot-attach-image /path/to/screenshot.png
-cursorbot-attach-file /path/to/report.pdf
+cursor-supervisor-attach-image /path/to/screenshot.png
+cursor-supervisor-attach-file /path/to/report.pdf
 ```
 
-cursorbot locates its data directory through `<workspace>/.cursorbot/data-dir.txt` (auto-written when the agent runs). If that fails, set `CURSORBOT_DATA_DIR=/path/to/data` explicitly.
+The tools find the data directory via `<workspace>/.cursor-supervisor/data-dir.txt`, or `CURSOR_SUPERVISOR_DATA_DIR`.
 
-### Reminders &mdash; time formats
-
-- Relative: `10m` `1h30m` `45s` `2d`
-- Today, daily: `09:00` `22:30`
-- Absolute: `2026-05-06T09:00`
-
-Default timezone `Asia/Shanghai`, override with `reminders.timezone` in `config.json`.
+Default reminder timezone is `America/Sao_Paulo` (override `reminders.timezone`).
 
 ## Architecture
 
 | Layer | Module |
 | --- | --- |
-| Entry | `src/bin/cursorbot.ts` |
-| Adapters | `src/adapters/telegram/` (grammy, implements `IMessenger`) |
-| Commands | `src/commands/` (parser + dispatcher + handlers) |
-| Orchestrator core | `src/core/orchestrator/` (`AgentOrchestrator` + `StreamRenderer` + `acpRuntime`) |
-| Workspace / session / access | `src/core/{workspace,session,access}/` |
-| Reminders / attachments | `src/core/{reminders,attachments}/` |
-| Persistence | `src/core/persist/jsonStore.ts` |
-| Config & logging | `src/config/`, `src/logger.ts` |
-| CLI tools | `src/tools/attach-image.ts`, `src/tools/attach-file.ts` |
-
-The two abstraction boundaries (`IMessenger`, `IAgentRuntime`) keep the orchestrator unaware of Telegram and the Cursor SDK; tests use `StubMessenger` + `StubAgentRuntime` to drive end-to-end flows.
-
-Full design rationale: [`docs/superpowers/specs/2026-05-05-cursorbot-design.md`](./docs/superpowers/specs/2026-05-05-cursorbot-design.md).
+| CLI | `src/bin/cursor-supervisor.ts` (`run`, `status`, `stop`) |
+| Service lock | `src/core/service/ServiceLock.ts` |
+| IDE extension | `extension/` (bundles `server/` in the VSIX) |
+| Telegram | `src/adapters/telegram/` |
+| Orchestrator | `src/core/orchestrator/` |
 
 ## Testing
 
 ```bash
-npm test            # 141+ unit & integration tests (vitest)
-npm run typecheck   # tsc --noEmit
-npm run lint        # eslint src tests
-```
-
-Manual smoke tests (require real API keys, real Telegram chat):
-
-```bash
-export CURSOR_API_KEY="..."
-npx tsx tests/manual/sdk_smoke.ts          # Cursor SDK only
-# tests/manual/m2-smoke.md                   # Full M2 e2e checklist
+npm test
+npm run typecheck
+npm run lint
 ```
 
 ## Deployment
 
-`cursorbot` is a long-running single process. Pick whichever supervisor matches your platform:
-
-- **Linux** &mdash; `systemd` user unit (recommended)
-- **Linux / macOS / Windows** &mdash; `pm2` (Node-native cross-platform)
-- **macOS** &mdash; `launchd` user agent
-- **Windows** &mdash; NSSM (run Node service as Windows Service)
-- **Docker** &mdash; planned, not in this milestone (the process needs host filesystem + Cursor SDK access)
-
-Concrete unit files & step-by-step in **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)**.
-
-## Roadmap
-
-- text **M1** &mdash; end-to-end text chat, workspace switching, commands, streaming, cancel, allow-list, systemd-friendly exit
-- text **M2** &mdash; bidirectional attachments, inbound images, reminders
-- text **M3** &mdash; WeChat adapter skeleton, Clawfox browser integration, MCP config hot-reload
+Long-running process: **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)**.
 
 ## Security
 
-A bot of this kind is essentially a **shell behind a messenger**. Treat it accordingly:
-
-- Keep `TELEGRAM_BOT_TOKEN` and `CURSOR_API_KEY` out of git. The repo's `.gitignore` already excludes `config.json` and `.cursorbot/`. Use environment variables in production.
-- Always set `telegram.allowedUserIds` to **just your own Telegram user IDs**. Non-listed messages are silently dropped.
-- If your bot was discovered (`@yourbot` is searchable), turn off groups & make the bot private; or rotate the token.
-- Run as a **non-root** OS user. Don't give the bot more filesystem access than your projects need.
-- Treat Cursor SDK runs the same way you treat `bash` executed remotely &mdash; because that is what they are.
-
-## FAQ
-
-Common errors and what they mean: **[docs/FAQ.md](./docs/FAQ.md)**.
-
-A few highlights:
-
-- _"Local SDK agents require an explicit 'model'"_ &rarr; you upgraded `@cursor/sdk` past 1.0.x; `AgentOrchestrator` already passes the model on resume, but make sure your `config.json` has a valid `cursor.defaultModel`.
-- _"Telegram: 400 Bad Request: can't parse entities"_ &rarr; HTML mode tried to render a literal `<word>`. Usage messages now use `parseMode: "plain"`; if you see this from custom code, escape angle brackets or switch parse mode.
-- _"`cursorbot-attach-image: command not found`"_ &rarr; you ran `npm install` but did not `npm link` or `npm i -g`; the agent's PATH does not see the local-only bin.
-
-## Contributing
-
-PRs and issues welcome. See **[.github/CONTRIBUTING.md](./.github/CONTRIBUTING.md)**.
-
-Quick loop:
-
-```bash
-npm test           # red/green
-npm run typecheck  # type safety
-npm run lint       # style
-```
-
-Fix lint errors before opening a PR; the project follows a strict TDD approach (tests first).
+- Do not commit `config.json` or `.cursor-supervisor/`.
+- Restrict `telegram.allowedUserIds` to your own IDs.
+- Run as a non-root OS user.
 
 ## License
 
-[MIT](./LICENSE) &copy; 2026 Jem Li
+[MIT](./LICENSE) © 2026 Michel Lima

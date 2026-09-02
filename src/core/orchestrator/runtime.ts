@@ -1,4 +1,4 @@
-// Runtime abstractions — ACP-backed agent execution for CursorBot.
+// Runtime abstractions — ACP-backed agent execution for Cursor Supervisor.
 
 export type AcpMode = "agent" | "plan" | "ask";
 

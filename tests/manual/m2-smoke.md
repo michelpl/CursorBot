@@ -6,7 +6,7 @@
 >
 > text `git status` text `npm test -- --run` text + text
 >
-> text `docs/superpowers/specs/2026-05-05-cursorbot-design.md` text 7 text
+> text `docs/superpowers/specs/2026-05-05-cursor-supervisor-design.md` text 7 text
 
 ## text
 
@@ -18,7 +18,7 @@
    ```bash
    npm install
    npm run build
-   npm link            # text PATH text cursorbot-attach-image / cursorbot-attach-file
+   npm link            # text PATH text cursor-supervisor-attach-image / cursor-supervisor-attach-file
    ```
 3. text active workspace text git textagent text
 
@@ -32,19 +32,19 @@ text
 
 - [x] 136 tests text
 - [x] typecheck / lint text
-- [x] `dist/bin/cursorbot.js`text`dist/tools/attach-image.js`text`dist/tools/attach-file.js` text `#!/usr/bin/env node` shebang
+- [x] `dist/bin/cursor-supervisor.js`text`dist/tools/attach-image.js`text`dist/tools/attach-file.js` text `#!/usr/bin/env node` shebang
 
 ## Step 2text dev
 
 ```bash
-npx tsx src/bin/cursorbot.ts
+npx tsx src/bin/cursor-supervisor.ts
 ```
 
 text startup logtext
 
-- [ ] `cursorbot started` text
+- [ ] `Cursor Supervisor started` text
 - [ ] text grammy 409text
-- [ ] active workspace text `.cursorbot/data-dir.txt` text `paths.dataDir`
+- [ ] active workspace text `\.cursor-supervisor/data-dir.txt` text `paths.dataDir`
 
 ## Step 3text9 text
 
@@ -57,10 +57,10 @@ text startup logtext
 
 - [ ] **B1 text**text agent text shell text
   ```bash
-  echo test > /tmp/clawtest.txt && cursorbot-attach-file /tmp/clawtest.txt --caption "test"
+  echo test > /tmp/clawtest.txt && cursor-supervisor-attach-file /tmp/clawtest.txt --caption "test"
   ```
   run text Telegram text
-- [ ] **B2 text + text**text agent text run text 2 text`cursorbot-attach-image`text`<dataDir>/queue.jsonl` text
+- [ ] **B2 text + text**text agent text run text 2 text`cursor-supervisor-attach-image`text`<dataDir>/queue.jsonl` text
 
 ### C Reminders
 

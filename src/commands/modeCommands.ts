@@ -25,13 +25,13 @@ export function parseModeCommand(cmd: ParsedCommand): ModeCommandResult | undefi
 export function modeCommandHelp(mode: AcpMode): string {
   switch (mode) {
     case "plan":
-      return "Uso: /plan <tarefa>\nElabora um plano no modo plan do Cursor.";
+      return "Usage: /plan <task>\nDraft a plan in Cursor plan mode.";
     case "agent":
       return (
-        "Uso:\n/agent — ativa modo agent\n/agent <prompt> — executa no modo agent\n" +
-        "Para executar plano guardado: /agent executar o plano (ou --plan)"
+        "Usage:\n/agent — switch to agent mode\n/agent <prompt> — run in agent mode\n" +
+        "To run a saved plan: /agent execute the plan (or --plan)"
       );
     case "ask":
-      return "Uso: /ask <pergunta>\nResponde no modo ask (read-only).";
+      return "Usage: /ask <question>\nAnswer in ask mode (read-only).";
   }
 }

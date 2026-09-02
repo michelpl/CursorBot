@@ -1,0 +1,14 @@
+**/.gitignore
+**/.vscode/**
+src/**
+tsconfig.json
+esbuild.mjs
+**/*.map
+**/*.vsix
+node_modules/**
+!dist/extension.js
+!package.json
+!README.md
+!LICENSE
+!assets/icon.png
+!server/**/*.js

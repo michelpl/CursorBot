@@ -150,7 +150,7 @@ export class ReminderScheduler {
         try {
           await this.deps.sendText(
             r.chatId,
-            `text text${r.prompt}textagent text`,
+            `Could not deliver reminder after retries: ${r.prompt}`,
           );
         } catch (e) {
           logger.error(
@@ -168,7 +168,7 @@ export class ReminderScheduler {
       try {
         await this.deps.sendText(
           r.chatId,
-          `Agente ocupado — lembrete reagendado em 1 min: ${r.prompt.slice(0, 60)}`,
+          `Agent is busy — reminder rescheduled in 1 min: ${r.prompt.slice(0, 60)}`,
         );
       } catch (e) {
         logger.error(

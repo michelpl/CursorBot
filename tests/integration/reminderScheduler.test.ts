@@ -160,7 +160,7 @@ describe("ReminderScheduler", () => {
     expect(runReminder).toHaveBeenCalledTimes(2);
     // text "text" text text
     const fallbackCall = sendText.mock.calls.find((c) =>
-      (c[1] as string).startsWith("text text"),
+      (c[1] as string).includes("Could not deliver reminder"),
     );
     expect(fallbackCall).toBeDefined();
     expect(store.list().length).toBe(0);

@@ -68,7 +68,7 @@ describe("handleRemind + ReminderQuota", () => {
     expect(scheduler.items.length).toBe(100);
     expect(scheduler.add).not.toHaveBeenCalled();
     expect(messenger.sent[messenger.sent.length - 1]?.text).toMatch(
-      /Limite de lembretes/i,
+      /Reminder limit/i,
     );
   });
 });

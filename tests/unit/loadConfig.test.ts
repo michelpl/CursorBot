@@ -79,7 +79,7 @@ describe("loadConfig", () => {
     await expect(loadConfig({ configPath: p })).rejects.toThrow(/allowedUserIds/);
   });
 
-  it("M2 sections use PT-BR defaults", async () => {
+  it("M2 sections use schema defaults", async () => {
     const path = join(dir, "config.json");
     await writeFile(
       path,
@@ -93,7 +93,7 @@ describe("loadConfig", () => {
     expect(cfg.reminders.timezone).toBe("America/Sao_Paulo");
     expect(cfg.reminders.maxAheadDays).toBe(30);
     expect(cfg.attachments.maxFileSizeBytes).toBe(20 * 1024 * 1024);
-    expect(cfg.images.defaultPromptSingle).toContain("Analise");
+    expect(cfg.images.defaultPromptSingle).toContain("Analyze");
     expect(cfg.images.mediaGroupDebounceMs).toBe(800);
     expect(cfg.rateLimit.sessionCreate.capacity).toBe(10);
   });

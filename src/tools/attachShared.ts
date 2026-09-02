@@ -44,26 +44,28 @@ function parseArgs(argv: string[]): ParsedArgs {
 
 // text
 // 1. --data-dir flag
-// 2. CURSORBOT_DATA_DIR env
-// 3. text cwd text .cursorbot/data-dir.txttextcursorbot text
+// 2. CURSOR_SUPERVISOR_DATA_DIR env
+// 3. walk cwd for .cursor-supervisor/data-dir.txt
 async function locateDataDir(override?: string): Promise<string> {
   if (override) return resolve(override);
-  if (process.env.CURSORBOT_DATA_DIR) return resolve(process.env.CURSORBOT_DATA_DIR);
+  if (process.env.CURSOR_SUPERVISOR_DATA_DIR) {
+    return resolve(process.env.CURSOR_SUPERVISOR_DATA_DIR);
+  }
   let cur = process.cwd();
   for (let i = 0; i < 32; i++) {
-    const marker = join(cur, ".cursorbot", "data-dir.txt");
+    const marker = join(cur, ".cursor-supervisor", "data-dir.txt");
     try {
       const txt = (await readFile(marker, "utf8")).trim();
       if (txt) return resolve(txt);
     } catch {
-      // text
+      // keep walking
     }
     const parent = dirname(cur);
     if (parent === cur) break;
     cur = parent;
   }
   throw new Error(
-    "could not locate cursorbot data dir; set CURSORBOT_DATA_DIR or run cursorbot once in this workspace",
+    "could not locate Cursor Supervisor data dir; set CURSOR_SUPERVISOR_DATA_DIR or run the service once in this workspace",
   );
 }
 

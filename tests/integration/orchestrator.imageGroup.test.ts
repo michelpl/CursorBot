@@ -156,7 +156,7 @@ describe("AgentOrchestrator.runPromptWithImages", () => {
       });
       expect(r.delivered).toBe(true);
       expect(
-        messenger.sentTexts.some((t) => t.text.includes("Lembrete")),
+        messenger.sentTexts.some((t) => t.text.includes("Reminder")),
       ).toBe(true);
     });
 

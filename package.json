@@ -1,11 +1,19 @@
 {
-  "name": "cursorbot",
+  "name": "cursor-supervisor-workspace",
   "version": "0.2.0",
   "private": true,
-  "description": "Telegram ↔ Cursor ACP bridge — drive Cursor agents on your local repos from your phone.",
+  "description": "Telegram \u2194 Cursor ACP bridge \u2014 drive Cursor agents on your local repos from your phone.",
   "type": "module",
   "license": "MIT",
   "author": "Michel Lima",
+  "homepage": "https://github.com/michelpl/cursor-supervisor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/michelpl/cursor-supervisor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/michelpl/cursor-supervisor/issues"
+  },
   "keywords": [
     "cursor",
     "cursor-acp",
@@ -19,18 +27,24 @@
     "messenger",
     "grammy"
   ],
+  "workspaces": [
+    "extension"
+  ],
   "engines": {
     "node": ">=20.10.0"
   },
   "bin": {
-    "cursorbot": "./dist/bin/cursorbot.js",
-    "cursorbot-attach-image": "./dist/tools/attach-image.js",
-    "cursorbot-attach-file": "./dist/tools/attach-file.js"
+    "cursor-supervisor": "./dist/bin/cursor-supervisor.js",
+    "cursor-supervisor-attach-image": "./dist/tools/attach-image.js",
+    "cursor-supervisor-attach-file": "./dist/tools/attach-file.js"
   },
   "scripts": {
-    "dev": "tsx watch src/bin/cursorbot.ts",
+    "dev": "tsx watch src/bin/cursor-supervisor.ts",
     "build": "tsup",
-    "start": "node dist/bin/cursorbot.js",
+    "extension:build": "npm run build --workspace=cursor-supervisor",
+    "extension:watch": "npm run watch --workspace=cursor-supervisor",
+    "extension:package": "node scripts/package-extension.mjs",
+    "start": "node dist/bin/cursor-supervisor.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src tests",

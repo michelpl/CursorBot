@@ -120,10 +120,10 @@ function makeTzDate(
 function finalize(at: number, opts: ParseTimeOptions): ParseTimeResult {
   const limit = opts.now + opts.maxAheadDays * 86400_000;
   if (at > limit) {
-    return { at: 0, error: `Máximo ${opts.maxAheadDays} dias à frente` };
+    return { at: 0, error: `Maximum ${opts.maxAheadDays} days ahead` };
   }
   if (at < opts.now) {
-    return { at: 0, error: "Horário no passado" };
+    return { at: 0, error: "Time is in the past" };
   }
   return { at };
 }

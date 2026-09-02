@@ -4,11 +4,11 @@ function renderRetryAfter(retryMs: number): string {
 }
 
 export function rateLimitedMessageText(retryMs: number): string {
-  return `Muitas mensagens. Tente novamente em ${renderRetryAfter(retryMs)}.`;
+  return `Too many messages. Try again in ${renderRetryAfter(retryMs)}.`;
 }
 
 export function rateLimitedSessionCreateText(retryMs: number): string {
-  return `Limite de criação de sessão atingido. Tente novamente em ${renderRetryAfter(retryMs)}.`;
+  return `Session-create limit reached. Try again in ${renderRetryAfter(retryMs)}.`;
 }
 
 /** @deprecated use rateLimitedSessionCreateText */

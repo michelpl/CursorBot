@@ -1,22 +1,17 @@
-# text
+# Ignore
 node_modules/
 
-# text
 dist/
 
-# text
 coverage/
 
-# text IDtext
 data/
 
-# text token / API keytext
 config.json
 .env
 .env.local
 .env.*.local
 
-# text
 *.log
 logs/
 
@@ -24,12 +19,19 @@ logs/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/
 
-# text
 *.tmp
 *.swp
 *.swo
 
-# M2: cursorbot text active workspace textattach CLI text dataDirtext
+# Workspace marker written by the running service
 .cursorbot/
+.cursor-supervisor/
+
+# Packaged extension artifacts
+extension/*.vsix
+extension/dist/
+extension/server/

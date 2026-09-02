@@ -98,7 +98,7 @@ describe("AgentOrchestrator sessionCreate rate limit", () => {
     expect(runtime.created).toEqual(["/tmp/ws1", "/tmp/ws2"]);
     expect(runtime.create).toHaveBeenCalledTimes(2);
     const last = messenger.sent[messenger.sent.length - 1]?.text ?? "";
-    expect(last).toMatch(/sessão/i);
+    expect(last).toMatch(/session/i);
   });
 
   it("cached agent skips sessionCreate bucket", async () => {

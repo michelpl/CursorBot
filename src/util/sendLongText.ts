@@ -20,7 +20,7 @@ export async function sendLongHtmlText(
   let part = 1;
   while (offset < body.length) {
     const chunk = body.slice(offset, offset + CHUNK_SIZE);
-    const prefix = part === 1 && opts?.header ? `${opts.header}\n` : `(continuação ${part})\n`;
+    const prefix = part === 1 && opts?.header ? `${opts.header}\n` : `(continued ${part})\n`;
     await messenger.sendText(chatId, escapeHtml(`${prefix}${chunk}`), {
       parseMode: "HTML",
     });

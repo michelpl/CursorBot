@@ -1,4 +1,4 @@
-const EXEC_KEYWORDS = /\b(executar|execute|plano|run plan)\b/i;
+const EXEC_KEYWORDS = /\b(execute the plan|run plan|execute)\b/i;
 
 /** Whether to inject the stored approved plan into an agent-mode prompt. */
 export function shouldInjectApprovedPlan(prompt: string): boolean {

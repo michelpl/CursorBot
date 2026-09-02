@@ -30,25 +30,49 @@ import { parseForcePrefix } from "../core/orchestrator/busyPolicy.js";
 import { sanitizeForOutput } from "../util/sanitize.js";
 import { RateLimiter } from "../core/rateLimit/RateLimiter.js";
 import { rateLimitGuard } from "./wiring/rateLimitGuard.js";
+import { ServiceLock, ServiceAlreadyRunningError } from "../core/service/ServiceLock.js";
 
-async function main(): Promise<void> {
-  const cfg = await loadConfig({});
+export interface RunBotOptions {
+  configPath?: string;
+  startedBy?: "cli" | "extension";
+}
+
+export async function runBot(opts: RunBotOptions = {}): Promise<void> {
+  const configPath = opts.configPath ?? "./config.json";
+  const cfg = await loadConfig({ configPath });
   if (
     cfg.cursor.apiKey.startsWith("REPLACE_") ||
     cfg.cursor.apiKey === "key_..."
   ) {
     throw new Error(
-      "cursor.apiKey não configurada. Defina CURSOR_API_KEY no ambiente ou edite config.json.",
+      "cursor.apiKey is not configured. Set CURSOR_API_KEY in the environment or edit config.json.",
     );
   }
   if (/^\d+:[A-Za-z0-9_-]+$/.test(cfg.cursor.apiKey)) {
     logger.warn(
-      "cursor.apiKey parece ser o token do Telegram, não uma chave Cursor (key_…). " +
-        "Obtenha em Cursor Settings ou use `agent login`.",
+      "cursor.apiKey looks like a Telegram bot token, not a Cursor key (key_…). " +
+        "Get it from Cursor Settings or run `agent login`.",
     );
   }
   const dataDir = cfg.paths.dataDir;
   await mkdir(dataDir, { recursive: true, mode: 0o700 });
+
+  const serviceLock = new ServiceLock(dataDir);
+  try {
+    await serviceLock.acquire({
+      configPath: resolve(configPath),
+      cwd: process.cwd(),
+      startedBy: opts.startedBy ?? "cli",
+    });
+  } catch (e) {
+    if (e instanceof ServiceAlreadyRunningError) {
+      throw new Error(
+        `${e.message}. Use \`cursor-supervisor status\` or \`cursor-supervisor stop\`.`,
+        { cause: e },
+      );
+    }
+    throw e;
+  }
 
   const registry = new WorkspaceRegistry(join(dataDir, "workspaces.json"));
   await registry.init({
@@ -64,7 +88,7 @@ async function main(): Promise<void> {
 
   const writeClawMarker = async (wsPath: string): Promise<void> => {
     try {
-      const markerDir = join(wsPath, ".cursorbot");
+      const markerDir = join(wsPath, ".cursor-supervisor");
       await mkdir(markerDir, { recursive: true, mode: 0o700 });
       const abs = resolve(dataDir);
       await writeFile(join(markerDir, "data-dir.txt"), abs, {
@@ -143,7 +167,7 @@ async function main(): Promise<void> {
       );
       await messenger.sendText(
         item.chatId,
-        "⏱ Interação expirada — resposta automática aplicada.",
+        "⏱ Interaction expired — a default response was applied.",
       );
     } catch (e) {
       logger.error({ err: (e as Error).message }, "interaction timeout handler failed");
@@ -232,13 +256,13 @@ async function main(): Promise<void> {
       );
       await messenger.answerCallbackQuery(
         msg.callbackQueryId,
-        ok ? "Registrado" : "Interação inválida",
+        ok ? "Recorded" : "Invalid interaction",
       );
     })();
   });
 
   await messenger.start();
-  logger.info("cursorbot started (ACP mode)");
+  logger.info("Cursor Supervisor started (ACP mode)");
 
   const shutdown = async (): Promise<void> => {
     logger.info("shutting down...");
@@ -262,6 +286,11 @@ async function main(): Promise<void> {
     } catch (e) {
       logger.error({ err: (e as Error).message }, "orch dispose");
     }
+    try {
+      await serviceLock.release();
+    } catch (e) {
+      logger.error({ err: (e as Error).message }, "service lock release");
+    }
     process.exit(0);
   };
   process.on("SIGINT", () => void shutdown());
@@ -280,7 +309,7 @@ async function main(): Promise<void> {
         used = images.slice(0, cap);
         await messenger.sendText(
           chatId,
-          `Limite de ${cap} imagens por prompt — usando as primeiras ${cap}.`,
+          `Image limit is ${cap} per prompt — using the first ${cap}.`,
         );
       }
       const text =
@@ -300,7 +329,7 @@ async function main(): Promise<void> {
       logger.error({ err: (e as Error).message }, "handleImageGroup failed");
       try {
         const safeMsg = sanitizeForOutput((e as Error).message);
-        await messenger.sendText(chatId, `Erro: ${safeMsg}`.slice(0, 800), {
+        await messenger.sendText(chatId, `Error: ${safeMsg}`.slice(0, 800), {
           parseMode: "plain",
         });
       } catch {
@@ -341,7 +370,7 @@ async function main(): Promise<void> {
               mode: modeCmd.mode,
               userId,
             });
-            await messenger.sendText(chatId, `Modo ${modeCmd.mode} ativo.`, {
+            await messenger.sendText(chatId, `Mode ${modeCmd.mode} is active.`, {
               parseMode: "plain",
             });
             return;
@@ -388,7 +417,7 @@ async function main(): Promise<void> {
       logger.error({ err: (e as Error).message }, "handleText failed");
       try {
         const safeMsg = sanitizeForOutput((e as Error).message);
-        await messenger.sendText(chatId, `Erro: ${safeMsg}`.slice(0, 800), {
+        await messenger.sendText(chatId, `Error: ${safeMsg}`.slice(0, 800), {
           parseMode: "plain",
         });
       } catch {
@@ -397,8 +426,3 @@ async function main(): Promise<void> {
     }
   }
 }
-
-main().catch((e) => {
-  logger.error({ err: (e as Error).message }, "fatal");
-  process.exit(1);
-});

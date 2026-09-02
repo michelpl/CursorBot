@@ -5,7 +5,7 @@ Prerequisites: Cursor CLI `agent` on PATH, valid `config.json`, Telegram bot tok
 ## Boot
 
 - [ ] `npm run build && npm start` — bot starts without SDK errors
-- [ ] Log shows `cursorbot started (ACP mode)`
+- [ ] Log shows `Cursor Supervisor started (ACP mode)`
 
 ## Workspace
 
@@ -21,9 +21,9 @@ Prerequisites: Cursor CLI `agent` on PATH, valid `config.json`, Telegram bot tok
 
 - [ ] `/plan <tarefa>` — switches to plan mode, streams response
 - [ ] Plan request shows full plan text + **Aprovar e guardar** / **Rejeitar**
-- [ ] Approve-save → "Plano guardado" message
-- [ ] `/agent` — "Modo agent ativo" without running a prompt
-- [ ] `/agent executar o plano` — injects saved plan and executes
+- [ ] Approve-save → "Plan saved" message
+- [ ] `/agent` — "Mode agent is active" without running a prompt
+- [ ] `/agent execute the plan` — injects saved plan and executes
 - [ ] Completion message sent separately ("Plano concluído" / "Execução concluída")
 
 ## Interactions (requires agent tool approval)

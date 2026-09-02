@@ -13,7 +13,7 @@ const keyHint =
 console.log("apiKey hint:", keyHint);
 if (/^\d+:[A-Za-z0-9_-]+$/.test(apiKey)) {
   console.warn(
-    "AVISO: cursor.apiKey parece um token do Telegram (formato 123456:ABC…), não uma chave Cursor (key_…).",
+    "WARNING: cursor.apiKey looks like a Telegram token (format 123456:ABC…), not a Cursor key (key_…).",
   );
 }
 
@@ -44,7 +44,7 @@ await step("initialize", () =>
       fs: { readTextFile: false, writeTextFile: false },
       terminal: false,
     },
-    clientInfo: { name: "cursorbot-debug", version: "0.2.0" },
+    clientInfo: { name: "cursor-supervisor-debug", version: "0.2.0" },
   }),
 );
 

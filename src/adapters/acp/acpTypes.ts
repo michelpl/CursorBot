@@ -1,4 +1,4 @@
-/** Cursor ACP JSON-RPC message shapes (subset used by CursorBot). */
+/** Cursor ACP JSON-RPC message shapes (subset used by Cursor Supervisor). */
 
 export interface JsonRpcRequest {
   jsonrpc: "2.0";

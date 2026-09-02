@@ -52,16 +52,16 @@ export const ConfigSchema = z.object({
       maxImagesPerPrompt: z.number().int().min(1).max(16).default(8),
       defaultPromptSingle: z
         .string()
-        .default("Analise esta imagem e descreva o que você vê."),
+        .default("Analyze this image and describe what you see."),
       defaultPromptMulti: z
         .string()
-        .default("Analise estas imagens e descreva o que você vê."),
+        .default("Analyze these images and describe what you see."),
       mediaGroupDebounceMs: z.number().int().min(50).max(2000).default(800),
     })
     .default({
       maxImagesPerPrompt: 8,
-      defaultPromptSingle: "Analise esta imagem e descreva o que você vê.",
-      defaultPromptMulti: "Analise estas imagens e descreva o que você vê.",
+      defaultPromptSingle: "Analyze this image and describe what you see.",
+      defaultPromptMulti: "Analyze these images and describe what you see.",
       mediaGroupDebounceMs: 800,
     }),
   rateLimit: z

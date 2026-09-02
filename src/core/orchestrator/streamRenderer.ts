@@ -50,7 +50,7 @@ export class StreamRenderer {
 
   async start(initialPlaceholder: string): Promise<void> {
     this.status = initialPlaceholder;
-    this.recordActivity("Cursor iniciado");
+    this.recordActivity("Cursor started");
     const handle = await this.messenger.sendText(this.chatId, this.compose());
     this.currentMsgId = handle.messageId;
   }
@@ -119,7 +119,7 @@ export class StreamRenderer {
       lines.push(`<b>Cursor</b> ${escapeHtmlFallback(this.status)}`, "");
     }
     if (this.activity.length > 0) {
-      lines.push("<b>Atividade</b>", this.activity.join("\n"), "");
+      lines.push("<b>Activity</b>", this.activity.join("\n"), "");
     }
     if (this.textBuffer) {
       lines.push(this.renderTextBufferSafely());

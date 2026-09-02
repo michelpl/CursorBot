@@ -101,7 +101,7 @@ describe("downloadTelegramFile text F-05 size cap", () => {
         botToken: "12345:fake",
         maxFileSizeBytes: 5 * 1024 * 1024,
       }),
-    ).rejects.toThrow(/excede|Tamanho/i);
+    ).rejects.toThrow(/exceeds|Size/i);
   });
 
   it("Case 4text base64", async () => {

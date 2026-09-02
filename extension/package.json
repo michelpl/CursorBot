@@ -1,0 +1,96 @@
+{
+  "name": "cursor-supervisor",
+  "displayName": "Cursor Supervisor",
+  "description": "Run the Telegram ↔ Cursor ACP bridge from the IDE: start, stop, and monitor the local service.",
+  "version": "0.2.0",
+  "publisher": "michelpl",
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "homepage": "https://github.com/michelpl/cursor-supervisor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/michelpl/cursor-supervisor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/michelpl/cursor-supervisor/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "keywords": [
+    "telegram",
+    "cursor",
+    "acp",
+    "agent",
+    "remote"
+  ],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cursorSupervisor.start",
+        "title": "Start",
+        "category": "Cursor Supervisor"
+      },
+      {
+        "command": "cursorSupervisor.stop",
+        "title": "Stop",
+        "category": "Cursor Supervisor"
+      },
+      {
+        "command": "cursorSupervisor.showStatus",
+        "title": "Show Status",
+        "category": "Cursor Supervisor"
+      }
+    ],
+    "configuration": {
+      "title": "Cursor Supervisor",
+      "properties": {
+        "cursorSupervisor.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Start Cursor Supervisor automatically when the workspace opens (if config.json exists and the service is not running)."
+        },
+        "cursorSupervisor.configPath": {
+          "type": "string",
+          "default": "${workspaceFolder}/config.json",
+          "description": "Path to config.json passed to the CLI."
+        },
+        "cursorSupervisor.nodePath": {
+          "type": "string",
+          "default": "node",
+          "description": "Node.js executable used to run the bundled service."
+        },
+        "cursorSupervisor.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "Override path to the Cursor Supervisor executable. Leave empty for auto-detection (bundled server, workspace, or PATH)."
+        },
+        "cursorSupervisor.detach": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run as a detached subprocess so it keeps running when the IDE closes."
+        },
+        "cursorSupervisor.statusPollIntervalMs": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 1000,
+          "description": "How often to refresh the status bar (milliseconds)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -15,7 +15,7 @@ export async function handleWs(
       const items = ctx.registry.list();
       const active = ctx.registry.getActive()?.name;
       if (items.length === 0) {
-        await ctx.messenger.sendText(ctx.chatId, "Nenhum workspace registrado.");
+        await ctx.messenger.sendText(ctx.chatId, "No workspaces registered.");
         return;
       }
       const body = items
@@ -30,7 +30,7 @@ export async function handleWs(
     case "use": {
       const name = args[1];
       if (!name) {
-        await ctx.messenger.sendText(ctx.chatId, "Uso: /ws use <nome>", {
+        await ctx.messenger.sendText(ctx.chatId, "Usage: /ws use <name>", {
           parseMode: "plain",
         });
         return;
@@ -45,30 +45,30 @@ export async function handleWs(
         }
         throw e;
       }
-      await ctx.messenger.sendText(ctx.chatId, `Workspace ativo: ${escapeHtml(name)}`);
+      await ctx.messenger.sendText(ctx.chatId, `Active workspace: ${escapeHtml(name)}`);
       return;
     }
     case "add": {
       const name = args[1];
       const path = args[2];
       if (!name || !path) {
-        await ctx.messenger.sendText(ctx.chatId, "Uso: /ws add <nome> <caminho-abs>", {
+        await ctx.messenger.sendText(ctx.chatId, "Usage: /ws add <name> <abs-path>", {
           parseMode: "plain",
         });
         return;
       }
       if (!isAbsolute(path)) {
-        await ctx.messenger.sendText(ctx.chatId, "O caminho deve ser absoluto.");
+        await ctx.messenger.sendText(ctx.chatId, "The path must be absolute.");
         return;
       }
       try {
         const s = await stat(path);
         if (!s.isDirectory()) {
-          await ctx.messenger.sendText(ctx.chatId, "O caminho deve ser um diretório.");
+          await ctx.messenger.sendText(ctx.chatId, "The path must be a directory.");
           return;
         }
       } catch {
-        await ctx.messenger.sendText(ctx.chatId, "Diretório não encontrado.");
+        await ctx.messenger.sendText(ctx.chatId, "Directory not found.");
         return;
       }
       if (ctx.workspaceAllowedRoots && ctx.workspaceAllowedRoots.length > 0) {
@@ -76,7 +76,7 @@ export async function handleWs(
         if (!allowed) {
           await ctx.messenger.sendText(
             ctx.chatId,
-            "Caminho fora dos diretórios permitidos (workspaces.allowedRoots).",
+            "Path is outside the allowed directories (workspaces.allowedRoots).",
           );
           return;
         }
@@ -91,13 +91,13 @@ export async function handleWs(
         }
         throw e;
       }
-      await ctx.messenger.sendText(ctx.chatId, `Workspace adicionado: ${escapeHtml(name)}`);
+      await ctx.messenger.sendText(ctx.chatId, `Workspace added: ${escapeHtml(name)}`);
       return;
     }
     case "remove": {
       const name = args[1];
       if (!name) {
-        await ctx.messenger.sendText(ctx.chatId, "Uso: /ws remove <nome>", {
+        await ctx.messenger.sendText(ctx.chatId, "Usage: /ws remove <name>", {
           parseMode: "plain",
         });
         return;
@@ -112,21 +112,21 @@ export async function handleWs(
         }
         throw e;
       }
-      await ctx.messenger.sendText(ctx.chatId, `Workspace removido: ${escapeHtml(name)}`);
+      await ctx.messenger.sendText(ctx.chatId, `Workspace removed: ${escapeHtml(name)}`);
       return;
     }
     case "path": {
       const w = ctx.registry.getActive();
       await ctx.messenger.sendText(
         ctx.chatId,
-        w ? escapeHtml(w.path) : "Nenhum workspace ativo.",
+        w ? escapeHtml(w.path) : "No active workspace.",
       );
       return;
     }
     default:
       await ctx.messenger.sendText(
         ctx.chatId,
-        "Uso: /ws list|use|add|remove|path",
+        "Usage: /ws list|use|add|remove|path",
       );
   }
 }

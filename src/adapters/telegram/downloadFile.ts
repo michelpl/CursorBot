@@ -56,12 +56,12 @@ export async function downloadTelegramFile(
       /* ignore */
     }
     throw new Error(
-      `content-length ${cl} excede ${maxFileSizeBytes} (file_id=${fileId})`,
+      `content-length ${cl} exceeds ${maxFileSizeBytes} (file_id=${fileId})`,
     );
   }
 
   if (!res.body) {
-    throw new Error(`Corpo vazio (file_id=${fileId})`);
+    throw new Error(`Empty body (file_id=${fileId})`);
   }
 
   // text 3 text Buffertext server text
@@ -81,7 +81,7 @@ export async function downloadTelegramFile(
           /* ignore */
         }
         throw new Error(
-          `Tamanho ${total} excede ${maxFileSizeBytes} (file_id=${fileId})`,
+          `Size ${total} exceeds ${maxFileSizeBytes} (file_id=${fileId})`,
         );
       }
       chunks.push(value);

@@ -102,7 +102,7 @@ describe("dispatchCommand", () => {
       { type: "command", name: "cancel", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(lastSent(messenger)).toMatch(/cancelamento/i);
+    expect(lastSent(messenger)).toMatch(/cancel/i);
   });
 
   it("/status shows workspace name", async () => {
@@ -130,6 +130,6 @@ describe("dispatchCommand", () => {
       { type: "command", name: "nonexistent", args: [], rest: "" },
       { chatId: "c1", messenger, registry, session, orchestrator: orch },
     );
-    expect(lastSent(messenger)).toMatch(/desconhecido|help/i);
+    expect(lastSent(messenger)).toMatch(/unknown|help/i);
   });
 });
