@@ -1,9 +1,10 @@
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import * as vscode from "vscode";
 
 export async function runSetupWizard(configPath: string): Promise<boolean> {
   const proceed = await vscode.window.showInformationMessage(
-    "No config.json found. Set up Cursor Supervisor for this workspace? Tokens stay on this machine and should not be committed.",
+    "No Cursor Supervisor config found. Set up this workspace? Tokens stay in `.cursor-supervisor/config.json` on this machine and should not be committed.",
     { modal: true },
     "Set up",
   );
@@ -82,9 +83,10 @@ export async function runSetupWizard(configPath: string): Promise<boolean> {
     },
   };
 
+  await mkdir(dirname(configPath), { recursive: true });
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
   void vscode.window.showInformationMessage(
-    `Wrote ${configPath}. Add config.json to .gitignore if this folder is a git repo.`,
+    `Wrote ${configPath}. The .cursor-supervisor folder is gitignored.`,
   );
   return true;
 }

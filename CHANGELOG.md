@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Extension Settings: `cursorSupervisor.enabled` master switch. Disabling while the Telegram service is running prompts to stop it (or cancel and keep enabled).
+- Commands **Set Telegram Bot Token** and **Set Cursor API Key** (masked inputs) write secrets to `.cursor-supervisor/config.json`, with links from the Settings descriptions.
+- Primary Side Bar activity icon and **Configuration** webview (enable switch, masked API keys, Start/Stop).
+- Extension setup wizard writes `config.json` under `.cursor-supervisor/` (legacy workspace-root `config.json` is still detected).
+
 ### Changed
 - Renamed the product from cursorbot / CursorBot to **Cursor Supervisor** (CLI `cursor-supervisor`, extension `michelpl.cursor-supervisor`).
 - User-facing strings (Telegram, CLI, IDE) are English.
 - Cursor IDE extension bundles the Telegram ACP service for Open VSX / Cursor marketplace packaging.
+
+### Fixed
+- Marketplace VSIX CLI now inlines Node dependencies, so status/start no longer fail with `ERR_MODULE_NOT_FOUND` (`commander` missing from the install folder).
 
 ### Changed (breaking — v0.2.0)
 - **SDK → ACP migration**: runtime uses Cursor CLI `agent acp` via JSON-RPC stdio instead of `@cursor/sdk`
@@ -35,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2] &mdash; 2026-05-06
 
 ### Fixed
-- Fix packaged `dist/bin/cursorbot.js` double shebang output. `tsup` already injects a bin shebang through `banner`, so the source entry must not include its own shebang. Adds a regression test plus `node --check` release smoke coverage.
+- Fix packaged `dist/bin/cursor-supervisor.js` double shebang output. `tsup` already injects a bin shebang through `banner`, so the source entry must not include its own shebang. Adds a regression test plus `node --check` release smoke coverage.
 
 ## [0.1.1] &mdash; 2026-05-06
 
@@ -48,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **F-05 (High)** Enforce `maxFileSizeBytes` cap across the photo download path with three gates (file_size pre-check / content-length / streaming accumulator). Closes the OOM DoS attack a single allowed user could trigger by sending oversized files. Side-effect: closes one of the F-01 user-side leak vectors by sanitizing fetch error messages. ([PR #1](https://github.com/michelpl/CursorBot/pull/1))
 - **F-14 (Medium)** Enforce `pendingRoot` boundary in `AttachmentDispatcher`. Reject any `queue.jsonl` entry whose path resolves outside the dispatcher's pending directory before any `readFile` / `unlink` / `sendImage`. Closes a path-traversal primitive that would let a successful prompt-injection (or queue-tampering) attacker exfiltrate arbitrary host files to the user's chat and `unlink` them. Uses `+ sep` prefix matching to also block sibling-directory bypass (`pendingRoot_evil/...`). ([PR #2](https://github.com/michelpl/CursorBot/pull/2))
 - **F-13 (Medium)** Enforce `0o700` directory / `0o600` file mode across `dataDir`, `JsonStore`, `AttachmentQueue`, and the attach CLI (`attach-image` / `attach-file`). Prevents same-host other-user reads of session history, reminders, attachment originals, and chatId/userId. Includes POSIX-only unit and integration mode assertions. ([PR #3](https://github.com/michelpl/CursorBot/pull/3))
-- **F-01 (Medium) + F-11 (Low)** Add string-content sanitizer (`src/util/sanitize.ts`) and wire it into both pino `formatters.log` (Layer B on top of existing path-based redact) and the user-facing `handleText` / `handleImageGroup` echo paths in `bin/cursorbot.ts`. Catches `bot<token>/` Telegram bot URL fragments and `crsr_<hex>` Cursor API keys before they land in logs or Telegram chat. Independent of F-05's source-side fetch wrap; defense-in-depth for any future error source. ([PR #4](https://github.com/michelpl/CursorBot/pull/4))
+- **F-01 (Medium) + F-11 (Low)** Add string-content sanitizer (`src/util/sanitize.ts`) and wire it into both pino `formatters.log` (Layer B on top of existing path-based redact) and the user-facing `handleText` / `handleImageGroup` echo paths in `bin/cursor-supervisor.ts`. Catches `bot<token>/` Telegram bot URL fragments and `crsr_<hex>` Cursor API keys before they land in logs or Telegram chat. Independent of F-05's source-side fetch wrap; defense-in-depth for any future error source. ([PR #4](https://github.com/michelpl/CursorBot/pull/4))
 - **F-03 (Medium)** Force-upgrade install-time transitive chain via `package.json` `overrides`: `tar` text 7.5.11+, `cacache` text 18, `make-fetch-happen` text 13, `node-gyp` text 10.3.1+, `http-proxy-agent` text 7, `@tootallnate/once` text 2 (re-mapped). Drops `npm audit` from 10 vulnerabilities (7 high) to 3 (1 high) text the 3 remaining are exactly the F-02 `undici` chain (Accepted-Risk). ([PR #5](https://github.com/michelpl/CursorBot/pull/5))
 - **F-10 (Medium)** Wire `cursor.sandboxOptions` through `bin text orchestrator text cursorSdkRuntime text @cursor/sdk` (`local.sandboxOptions` on both `Agent.create` and `Agent.resume`). Schema default flips from undefined to `{ enabled: true }`, hardening the agent against prompt-injection (F-09) by default. Sandbox specifics live in `~/.cursor/sandbox.json` per the [Cursor sandbox.json reference](https://cursor.com/docs/reference/sandbox). Operators needing the old unrestricted behavior can opt out via `cursor.sandboxOptions.enabled = false` in `config.json`. ([PR #6](https://github.com/michelpl/CursorBot/pull/6))
 - **F-06 (Medium)** Add three-layer resource caps: `TokenBucket` / `RateLimiter` for messenger message flood and `agentCreate` cached-miss throttling, plus `ReminderQuota` for per-user reminder totals. Defaults: message bucket capacity 4 with 2 msg/s refill, agent-create capacity 10 with 10/min refill, reminders max 100/user. Exceeded limits return Chinese retry/quota hints and log `warn` for owner diagnostics. ([PR #7](https://github.com/michelpl/CursorBot/pull/7), [#8](https://github.com/michelpl/CursorBot/pull/8), [#9](https://github.com/michelpl/CursorBot/pull/9), [#10](https://github.com/michelpl/CursorBot/pull/10), [#11](https://github.com/michelpl/CursorBot/pull/11))
@@ -87,7 +96,7 @@ First milestone release. Covers **M0 (scaffold)**, **M1 (text e2e)**, **M2 (atta
 - `StreamRenderer` &mdash; throttled `editMessageText` + status-line + long-message rotation.
 - `AgentOrchestrator` MVP + 5 integration tests (Stub messenger + Stub runtime).
 - Telegram adapter on `grammy` &mdash; implements `IMessenger`, includes inbound photo callback.
-- `cursorbot` main entry: `CursorSdkRuntime` wiring + Telegram bot + command dispatch.
+- `cursor-supervisor` main entry: `CursorSdkRuntime` wiring + Telegram bot + command dispatch.
 
 ### Added &mdash; M2 (images / attachments / reminders)
 
@@ -98,7 +107,7 @@ First milestone release. Covers **M0 (scaffold)**, **M1 (text e2e)**, **M2 (atta
   - Wires `imageGroup` events to the orchestrator end-to-end.
 - **M2-B &mdash; Outbound attachments**:
   - `AttachmentQueue` &mdash; JSONL append-only queue read/write.
-  - `cursorbot-attach-image` / `cursorbot-attach-file` CLI tools (fast cold start).
+  - `cursor-supervisor-attach-image` / `cursor-supervisor-attach-file` CLI tools (fast cold start).
   - `AttachmentDispatcher` &mdash; flush + retry + failure notification.
   - Orchestrator calls `dispatcher.flushForCwd` after each run.
 - **M2-C &mdash; Reminders**:
@@ -109,7 +118,7 @@ First milestone release. Covers **M0 (scaffold)**, **M1 (text e2e)**, **M2 (atta
   - `/remind add|list|del` command routing + handler.
 - **M2-D &mdash; Wiring**:
   - Main entry assembles dispatcher + scheduler.
-  - Writes `<workspace>/.cursorbot/data-dir.txt` so `cursorbot-attach-*` CLIs can locate the data dir.
+  - Writes `<workspace>/.cursor-supervisor/data-dir.txt` so `cursor-supervisor-attach-*` CLIs can locate the data dir.
 - Three new config sections: `reminders.*`, `attachments.*`, `images.*`.
 
 ### Fixed &mdash; M2 polish (post-smoke)
@@ -139,12 +148,12 @@ First milestone release. Covers **M0 (scaffold)**, **M1 (text e2e)**, **M2 (atta
 ### Documentation
 
 - Design specs:
-  - `docs/superpowers/specs/2026-05-05-cursorbot-design.md` (M1)
-  - `docs/superpowers/specs/2026-05-05-cursorbot-m2-design.md` (M2)
+  - `docs/superpowers/specs/2026-05-05-cursor-supervisor-design.md` (M1)
+  - `docs/superpowers/specs/2026-05-05-cursor-supervisor-m2-design.md` (M2)
   - `docs/superpowers/specs/2026-05-06-streamrenderer-markdown-design.md` (polish)
 - Implementation plans:
-  - `docs/superpowers/plans/2026-05-05-cursorbot-m1.md`
-  - `docs/superpowers/plans/2026-05-05-cursorbot-m2.md`
+  - `docs/superpowers/plans/2026-05-05-cursor-supervisor-m1.md`
+  - `docs/superpowers/plans/2026-05-05-cursor-supervisor-m2.md`
   - `docs/superpowers/plans/2026-05-06-streamrenderer-markdown.md`
 
 [Unreleased]: https://github.com/michelpl/cursor-supervisor/compare/v0.2.0...HEAD

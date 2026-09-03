@@ -13,6 +13,13 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   dts: false,
-  shims: false,
-  banner: { js: "#!/usr/bin/env node" },
+  shims: true,
+  // VSIX copies dist into extension/server without node_modules.
+  noExternal: [/.*/],
+  banner: {
+    js: `#!/usr/bin/env node
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+`,
+  },
 });

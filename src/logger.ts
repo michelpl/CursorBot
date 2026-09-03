@@ -71,7 +71,7 @@ export const logger = pino({
     log: (obj) => sanitizeObjectStrings(obj) as Record<string, unknown>,
   },
   transport:
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === "production" || !process.stdout.isTTY
       ? undefined
       : { target: "pino-pretty", options: { colorize: true, translateTime: "SYS:HH:MM:ss" } },
 });

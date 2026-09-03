@@ -8,6 +8,15 @@ import {
   type ServiceStatus,
 } from "./serviceClient";
 import { runSetupWizard } from "./setupWizard";
+import {
+  getSecretFlags,
+  promptAndSaveSecret,
+  writeSecretField,
+} from "./configSecrets";
+import {
+  CONFIG_VIEW_ID,
+  ConfigViewProvider,
+} from "./configView";
 
 type BarState = "stopped" | "starting" | "running" | "error";
 
@@ -22,6 +31,8 @@ export function activate(context: vscode.ExtensionContext): void {
   let barState: BarState = "stopped";
   let lastError = "";
   let pollTimer: ReturnType<typeof setInterval> | undefined;
+  let ignoreEnabledChange = false;
+  let configView: ConfigViewProvider | undefined;
 
   function getWorkspaceRoot(): string | undefined {
     const folders = vscode.workspace.workspaceFolders;
@@ -39,6 +50,8 @@ export function activate(context: vscode.ExtensionContext): void {
   function resolveConfig(root: string, setting: string): string {
     const fromSetting = resolveConfigPath(root, setting);
     if (existsSync(fromSetting)) return fromSetting;
+    const inSupervisorDir = join(root, ".cursor-supervisor", "config.json");
+    if (existsSync(inSupervisorDir)) return inSupervisorDir;
     const atRoot = join(root, "config.json");
     if (existsSync(atRoot)) return atRoot;
     const parent = join(dirname(root), "config.json");
@@ -53,10 +66,14 @@ export function activate(context: vscode.ExtensionContext): void {
       return null;
     }
     return {
+      enabled: cfg.get<boolean>("enabled", true),
       autoStart: cfg.get<boolean>("autoStart", false),
       configPath: resolveConfig(
         root,
-        cfg.get<string>("configPath", "${workspaceFolder}/config.json"),
+        cfg.get<string>(
+          "configPath",
+          "${workspaceFolder}/.cursor-supervisor/config.json",
+        ),
       ),
       nodePath: cfg.get<string>("nodePath", "node"),
       executablePath: cfg.get<string>("executablePath", ""),
@@ -180,6 +197,90 @@ export function activate(context: vscode.ExtensionContext): void {
     return "cancel";
   }
 
+  function enabledUpdateTarget(): vscode.ConfigurationTarget {
+    const inspect = vscode.workspace
+      .getConfiguration("cursorSupervisor")
+      .inspect<boolean>("enabled");
+    if (inspect?.workspaceFolderValue !== undefined) {
+      return vscode.ConfigurationTarget.WorkspaceFolder;
+    }
+    if (inspect?.workspaceValue !== undefined) {
+      return vscode.ConfigurationTarget.Workspace;
+    }
+    if (inspect?.globalValue !== undefined) {
+      return vscode.ConfigurationTarget.Global;
+    }
+    return vscode.ConfigurationTarget.Workspace;
+  }
+
+  async function handleEnabledChanged(): Promise<void> {
+    if (ignoreEnabledChange) return;
+    const s = getSettings();
+    if (!s) return;
+    if (s.enabled) {
+      void vscode.window.showInformationMessage(
+        "Cursor Supervisor is enabled. Use Start to run the service.",
+      );
+      void configView?.refresh();
+      return;
+    }
+
+    const client = makeClient();
+    if (!client) return;
+
+    let status: ServiceStatus | undefined;
+    try {
+      status = await client.getStatus();
+    } catch (e) {
+      void vscode.window.showErrorMessage((e as Error).message);
+      return;
+    }
+
+    if (!status.running) {
+      void configView?.refresh();
+      return;
+    }
+
+    const choice = await vscode.window.showWarningMessage(
+      `Telegram integration is running (PID ${status.pid}, since ${formatSince(status.startedAt)}). Disable Cursor Supervisor and stop the service?`,
+      { modal: true },
+      "Stop and disable",
+      "Cancel",
+    );
+
+    if (choice === "Stop and disable") {
+      try {
+        const msg = await client.stop();
+        barState = "stopped";
+        renderBar();
+        void vscode.window.showInformationMessage(msg);
+      } catch (e) {
+        lastError = (e as Error).message;
+        barState = "error";
+        renderBar();
+        void vscode.window.showErrorMessage(lastError);
+      }
+      void configView?.refresh();
+      return;
+    }
+
+    ignoreEnabledChange = true;
+    try {
+      const target = enabledUpdateTarget();
+      const folder = vscode.workspace.workspaceFolders?.[0];
+      const cfg =
+        target === vscode.ConfigurationTarget.WorkspaceFolder && folder
+          ? vscode.workspace.getConfiguration("cursorSupervisor", folder.uri)
+          : vscode.workspace.getConfiguration("cursorSupervisor");
+      await cfg.update("enabled", true, target);
+    } finally {
+      setTimeout(() => {
+        ignoreEnabledChange = false;
+        void configView?.refresh();
+      }, 0);
+    }
+  }
+
   async function doStart(source: "manual" | "autostart" = "manual"): Promise<void> {
     const client = makeClient();
     if (!client) {
@@ -188,6 +289,15 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const s = getSettings();
+    if (!s) return;
+    if (!s.enabled) {
+      if (source === "manual") {
+        void vscode.window.showErrorMessage(
+          "Cursor Supervisor is disabled in Settings. Enable it to start the service.",
+        );
+      }
+      return;
+    }
     if (!(await workspaceHasConfig(s.configPath))) {
       if (source === "autostart") return;
       const created = await runSetupWizard(s.configPath);
@@ -268,6 +378,7 @@ export function activate(context: vscode.ExtensionContext): void {
       renderBar();
       void vscode.window.showErrorMessage(lastError);
     }
+    void configView?.refresh();
   }
 
   async function doStop(): Promise<void> {
@@ -284,6 +395,7 @@ export function activate(context: vscode.ExtensionContext): void {
       renderBar();
       void vscode.window.showErrorMessage(lastError);
     }
+    void configView?.refresh();
   }
 
   async function doShowStatus(): Promise<void> {
@@ -313,10 +425,146 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }
 
+  async function doSetTelegramBotToken(): Promise<void> {
+    const s = getSettings();
+    if (!s) {
+      void vscode.window.showErrorMessage(
+        "Open a workspace folder to use Cursor Supervisor.",
+      );
+      return;
+    }
+    await promptAndSaveSecret({
+      configPath: s.configPath,
+      field: "telegram.botToken",
+      title: "Telegram bot token",
+      prompt: "From @BotFather (TELEGRAM_BOT_TOKEN)",
+    });
+    void configView?.refresh();
+  }
+
+  async function doSetCursorApiKey(): Promise<void> {
+    const s = getSettings();
+    if (!s) {
+      void vscode.window.showErrorMessage(
+        "Open a workspace folder to use Cursor Supervisor.",
+      );
+      return;
+    }
+    await promptAndSaveSecret({
+      configPath: s.configPath,
+      field: "cursor.apiKey",
+      title: "Cursor API key",
+      prompt: "From Cursor Settings or `agent login` (CURSOR_API_KEY)",
+    });
+    void configView?.refresh();
+  }
+
+  async function setEnabledFromView(enabled: boolean): Promise<void> {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const cfg = folder
+      ? vscode.workspace.getConfiguration("cursorSupervisor", folder.uri)
+      : vscode.workspace.getConfiguration("cursorSupervisor");
+    await cfg.update("enabled", enabled, vscode.ConfigurationTarget.Workspace);
+  }
+
+  async function saveSecretsFromView(input: {
+    telegramBotToken: string;
+    cursorApiKey: string;
+  }): Promise<void> {
+    const s = getSettings();
+    if (!s) {
+      void vscode.window.showErrorMessage(
+        "Open a workspace folder to use Cursor Supervisor.",
+      );
+      return;
+    }
+    if (!(await workspaceHasConfig(s.configPath))) {
+      const created = await runSetupWizard(s.configPath);
+      if (!created) return;
+    }
+    const updated: string[] = [];
+    if (input.telegramBotToken.trim()) {
+      const result = await writeSecretField(
+        s.configPath,
+        "telegram.botToken",
+        input.telegramBotToken,
+      );
+      if (result === "updated") updated.push("Telegram bot token");
+    }
+    if (input.cursorApiKey.trim()) {
+      const result = await writeSecretField(
+        s.configPath,
+        "cursor.apiKey",
+        input.cursorApiKey,
+      );
+      if (result === "updated") updated.push("Cursor API key");
+    }
+    if (updated.length === 0) {
+      void vscode.window.showInformationMessage("No keys changed.");
+      return;
+    }
+    void vscode.window.showInformationMessage(`Updated ${updated.join(" and ")}.`);
+  }
+
+  async function getViewSnapshot() {
+    const s = getSettings();
+    if (!s) {
+      return {
+        hasWorkspace: false,
+        enabled: true,
+        running: false,
+        configExists: false,
+        telegramConfigured: false,
+        cursorConfigured: false,
+      };
+    }
+    const flags = await getSecretFlags(s.configPath);
+    let running = false;
+    const client = makeClient();
+    if (client) {
+      try {
+        running = (await client.getStatus()).running;
+      } catch {
+        running = false;
+      }
+    }
+    return {
+      hasWorkspace: true,
+      enabled: s.enabled,
+      running,
+      configExists: flags.configExists,
+      telegramConfigured: flags.telegramBotToken,
+      cursorConfigured: flags.cursorApiKey,
+    };
+  }
+
+  configView = new ConfigViewProvider({
+    getSnapshot: getViewSnapshot,
+    setEnabled: setEnabledFromView,
+    saveSecrets: saveSecretsFromView,
+    start: () => doStart("manual"),
+    stop: () => doStop(),
+  });
+
   context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(CONFIG_VIEW_ID, configView, {
+      webviewOptions: { retainContextWhenHidden: true },
+    }),
     vscode.commands.registerCommand("cursorSupervisor.start", () => doStart("manual")),
     vscode.commands.registerCommand("cursorSupervisor.stop", () => doStop()),
     vscode.commands.registerCommand("cursorSupervisor.showStatus", () => doShowStatus()),
+    vscode.commands.registerCommand(
+      "cursorSupervisor.setTelegramBotToken",
+      () => doSetTelegramBotToken(),
+    ),
+    vscode.commands.registerCommand(
+      "cursorSupervisor.setCursorApiKey",
+      () => doSetCursorApiKey(),
+    ),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (!e.affectsConfiguration("cursorSupervisor.enabled")) return;
+      void handleEnabledChanged();
+    }),
   );
 
   renderBar();
@@ -325,7 +573,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   void (async () => {
     const s = getSettings();
-    if (!s.autoStart) return;
+    if (!s || !s.enabled || !s.autoStart) return;
     if (!(await workspaceHasConfig(s.configPath))) return;
     const client = makeClient();
     if (!client) return;

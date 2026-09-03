@@ -28,10 +28,12 @@ logs/
 *.swo
 
 # Workspace marker written by the running service
-.cursorbot/
 .cursor-supervisor/
+# Legacy marker directory (pre-rename)
+.cursorbot/
 
 # Packaged extension artifacts
 extension/*.vsix
 extension/dist/
 extension/server/
+.

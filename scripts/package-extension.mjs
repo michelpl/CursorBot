@@ -1,4 +1,4 @@
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,5 +24,9 @@ await mkdir(join(serverDir, "bin"), { recursive: true });
 await mkdir(join(serverDir, "tools"), { recursive: true });
 await cp(join(root, "dist", "bin"), join(serverDir, "bin"), { recursive: true });
 await cp(join(root, "dist", "tools"), join(serverDir, "tools"), { recursive: true });
+await writeFile(
+  join(serverDir, "package.json"),
+  `${JSON.stringify({ type: "module" }, null, 2)}\n`,
+);
 run("npm", ["run", "build"], extensionDir);
 run("npx", ["@vscode/vsce", "package", "--no-dependencies"], extensionDir);

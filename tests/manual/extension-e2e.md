@@ -1,13 +1,14 @@
 # Extension E2E Manual Checklist
 
-Requires a built project (`npm run build`), built extension (`npm run extension:build`), and valid `config.json`.
+Requires a built project (`npm run build`), built extension (`npm run extension:build`), and valid `.cursor-supervisor/config.json`.
 
 ## Setup
 
 - [ ] Open repo in Cursor
 - [ ] `npm run extension:build` succeeds
 - [ ] F5 from `extension/.vscode/launch.json` opens Extension Development Host
-- [ ] Open workspace folder with `config.json` in the Extension Development Host
+- [ ] Open workspace folder with `.cursor-supervisor/config.json` in the Extension Development Host
+- [ ] Activity Bar shows the Cursor Supervisor icon; opening it shows the Configuration view
 
 ## Start / Stop
 
@@ -28,6 +29,18 @@ Requires a built project (`npm run build`), built extension (`npm run extension:
 
 - [ ] Click status bar → **Show Status** message with PID
 - [ ] Poll updates after external `cursor-supervisor stop` from terminal
+
+## Settings: enabled and secrets
+
+- [ ] Settings → Cursor Supervisor shows **Enable Cursor Supervisor**
+- [ ] Command links / palette → **Set Telegram Bot Token** / **Set Cursor API Key** → password-masked input
+- [ ] Saving a key updates `.cursor-supervisor/config.json`; empty input keeps the existing value
+- [ ] Secrets do not appear in `settings.json`
+- [ ] Disable while service is **stopped** → no modal
+- [ ] Disable while Telegram service is **running** → modal **Stop and disable** / **Cancel**
+- [ ] **Cancel** restores enabled; process keeps running
+- [ ] **Stop and disable** stops the service; status bar shows stopped
+- [ ] With `enabled: false`, **Start** is blocked; autoStart does not start
 
 ## autoStart
 

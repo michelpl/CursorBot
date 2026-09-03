@@ -28,6 +28,24 @@
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cursorSupervisor",
+          "title": "Cursor Supervisor",
+          "icon": "assets/activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "cursorSupervisor": [
+        {
+          "type": "webview",
+          "id": "cursorSupervisor.configView",
+          "name": "Configuration"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "cursorSupervisor.start",
@@ -43,20 +61,37 @@
         "command": "cursorSupervisor.showStatus",
         "title": "Show Status",
         "category": "Cursor Supervisor"
+      },
+      {
+        "command": "cursorSupervisor.setTelegramBotToken",
+        "title": "Set Telegram Bot Token",
+        "category": "Cursor Supervisor"
+      },
+      {
+        "command": "cursorSupervisor.setCursorApiKey",
+        "title": "Set Cursor API Key",
+        "category": "Cursor Supervisor"
       }
     ],
     "configuration": {
       "title": "Cursor Supervisor",
       "properties": {
+        "cursorSupervisor.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Cursor Supervisor. When off, the extension will not start the service (Start and autoStart are blocked). Disabling while the Telegram integration is running shows a confirmation to stop it.",
+          "markdownDescription": "Enable Cursor Supervisor. When off, **Start** and **autoStart** are blocked. Disabling while the Telegram integration is running asks to stop the service.\n\nAPI keys are stored in `config.json` (not in Settings) so they stay masked:\n- [Set Telegram bot token](command:cursorSupervisor.setTelegramBotToken)\n- [Set Cursor API key](command:cursorSupervisor.setCursorApiKey)"
+        },
         "cursorSupervisor.autoStart": {
           "type": "boolean",
           "default": false,
-          "description": "Start Cursor Supervisor automatically when the workspace opens (if config.json exists and the service is not running)."
+          "description": "Start Cursor Supervisor automatically when the workspace opens (if enabled, config.json exists, and the service is not running)."
         },
         "cursorSupervisor.configPath": {
           "type": "string",
-          "default": "${workspaceFolder}/config.json",
-          "description": "Path to config.json passed to the CLI."
+          "default": "${workspaceFolder}/.cursor-supervisor/config.json",
+          "description": "Path to config.json passed to the CLI.",
+          "markdownDescription": "Path to `config.json` passed to the CLI (default: `.cursor-supervisor/config.json`). Secrets live in this file.\n\n- [Set Telegram bot token](command:cursorSupervisor.setTelegramBotToken)\n- [Set Cursor API key](command:cursorSupervisor.setCursorApiKey)"
         },
         "cursorSupervisor.nodePath": {
           "type": "string",

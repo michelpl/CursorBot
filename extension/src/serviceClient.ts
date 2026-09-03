@@ -48,6 +48,11 @@ function isWindows(): boolean {
   return process.platform === "win32";
 }
 
+/** Avoid pino-pretty (and other dev transports) when spawned from the IDE. */
+function serviceEnv(): NodeJS.ProcessEnv {
+  return { ...process.env, NODE_ENV: process.env.NODE_ENV || "production" };
+}
+
 function cmdShim(path: string): string {
   return isWindows() ? `${path}.cmd` : path;
 }
@@ -204,6 +209,7 @@ export class ServiceClient {
         cwd: exe.cwd,
         shell: exe.shell,
         windowsHide: true,
+        env: serviceEnv(),
         timeout: 10_000,
         maxBuffer: 64 * 1024,
       });
@@ -227,6 +233,7 @@ export class ServiceClient {
         cwd: exe.cwd,
         shell: exe.shell,
         windowsHide: true,
+        env: serviceEnv(),
         timeout: timeoutMs + 5_000,
         maxBuffer: 64 * 1024,
       });
@@ -259,7 +266,7 @@ export class ServiceClient {
         detached: this.opts.detach,
         stdio: this.opts.detach ? "ignore" : "pipe",
         windowsHide: true,
-        env: { ...process.env },
+        env: serviceEnv(),
       });
 
       if (!this.opts.detach) {

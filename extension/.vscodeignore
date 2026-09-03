@@ -11,4 +11,6 @@ node_modules/**
 !README.md
 !LICENSE
 !assets/icon.png
+!assets/activitybar.svg
 !server/**/*.js
+!server/package.json

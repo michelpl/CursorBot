@@ -17,7 +17,7 @@ Once you have all three, drop them into `config.json` (or set them as env vars) 
 1. In Telegram, search **`@BotFather`** and tap **Start**.
 2. Send `/newbot`.
 3. BotFather will ask for a **display name** (free text, e.g. "Cursor Supervisor").
-4. Then for a **username** (must end in `bot`, e.g. `cursorbot_example_bot`).
+4. Then for a **username** (must end in `bot`, e.g. `cursorsupervisor_bot`).
 5. BotFather replies with:
    ```
    Use this token to access the HTTP API:
