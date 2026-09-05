@@ -75,10 +75,13 @@ Plain messages are prompts. Prefix with `!` to cancel whatever is running and st
 
 This is a remote shell into **your** machine. Treat it that way.
 
-- Keep `config.json` out of git (already gitignored)
+- Keep `config.json` / `.cursor-supervisor/` out of git (already gitignored)
+- `.cursorignore` / `.cursorindexingignore` keep those paths away from Cursor agents and indexing
+- Outbound Telegram text and logs redact bare bot tokens and Cursor API keys
+- The ACP child process does **not** inherit `TELEGRAM_BOT_TOKEN` (or lookalike env values)
 - Put **only your** numeric Telegram IDs in `allowedUserIds`
 - Do not run the process as root
-- Rotate the bot token if the username is public and you did not expect traffic
+- Rotate the bot token immediately if it may have leaked; prefer a neutral bot name (avoid brand names like “Cursor”)
 
 ## Development
 

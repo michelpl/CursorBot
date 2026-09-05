@@ -60,6 +60,39 @@ export function acpSpawnOptions(resolvedPath: string): Pick<SpawnOptions, "shell
   return { shell: needsShell };
 }
 
+/** Env keys that must never reach the Cursor ACP child process. */
+const ACP_STRIP_ENV_KEYS = new Set([
+  "TELEGRAM_BOT_TOKEN",
+  "BOT_TOKEN",
+  "TG_BOT_TOKEN",
+  "TELEGRAM_TOKEN",
+]);
+
+/**
+ * Build the environment for `agent acp`.
+ * Keeps CURSOR_API_KEY (set from config) but strips Telegram bot tokens so a
+ * compromised or curious agent cannot read them from `process.env`.
+ */
+export function buildAcpEnv(
+  baseEnv: NodeJS.ProcessEnv,
+  apiKey?: string,
+): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...baseEnv };
+  for (const key of ACP_STRIP_ENV_KEYS) {
+    delete env[key];
+  }
+  // Also drop any env var whose value looks like a BotFather token.
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string" && /^\d{8,12}:[A-Za-z0-9_-]{30,}$/.test(value)) {
+      delete env[key];
+    }
+  }
+  if (apiKey) {
+    env.CURSOR_API_KEY = apiKey;
+  }
+  return env;
+}
+
 /** Spawns `agent acp` and exposes stdin/stdout as line transport. */
 export class AcpProcess implements LineTransport {
   private proc?: ChildProcessWithoutNullStreams;
@@ -74,10 +107,7 @@ export class AcpProcess implements LineTransport {
 
   async start(): Promise<void> {
     const args = ["acp"];
-    const env = { ...process.env };
-    if (this.opts.apiKey) {
-      env.CURSOR_API_KEY = this.opts.apiKey;
-    }
+    const env = buildAcpEnv(process.env, this.opts.apiKey);
 
     const spawnOpts = acpSpawnOptions(this.resolvedPath);
     let settled = false;

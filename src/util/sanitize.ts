@@ -1,28 +1,28 @@
-// F-01 / F-11 text
+// Redact secrets before they reach Telegram, logs, or other sinks.
 //
-// text
-// - text"text"texttoken / key text
-// - text / text text F-11 text
-// - text string text typo text fallbacktext
-//
-// text
-// 1. Telegram text URLtexthttps://api.telegram.org/file/bot<token>/<file_path>
-//    botToken text "<digits>:<base58-ish>"text "bot<token>/" text
-// 2. Cursor API keytextcrsr_<hex>texthex text text 32text
+// Layers:
+// 1. Telegram file URLs: https://api.telegram.org/file/bot<token>/<path>
+// 2. Bare Telegram bot tokens: "<digits>:<secret>"
+// 3. Cursor API keys: crsr_<…> and key_<…>
 
-// Telegram bot URL text tokentext
-// - bot text tokentexttoken text`-`text`:`text `/`
-// - text "bot<token>/" text "bot***/"
+/** Matches `bot<token>/` in Telegram Bot API file URLs. */
 const TELEGRAM_BOT_URL_RE = /bot[A-Za-z0-9_:-]{20,}\//g;
 
-// Cursor API keytextcrsr_ + 16 text hex / base62 text
-// text "crsr_<key>" text "crsr_***"
-const CURSOR_API_KEY_RE = /crsr_[A-Za-z0-9]{16,}/g;
+/**
+ * Bare Bot API tokens (BotFather format).
+ * Conservative length floor avoids mangling innocuous `123:abc` fixtures in tests
+ * while catching real tokens (~35+ chars after the colon).
+ */
+const TELEGRAM_BOT_TOKEN_RE = /\b\d{8,12}:[A-Za-z0-9_-]{30,}\b/g;
+
+/** Cursor API key forms used by the SDK / dashboard. */
+const CURSOR_API_KEY_RE = /\b(?:crsr_|key_)[A-Za-z0-9_-]{16,}\b/g;
 
 export function sanitizeForOutput(s: string): string {
   if (typeof s !== "string") return "";
   if (s.length === 0) return "";
   return s
     .replace(TELEGRAM_BOT_URL_RE, "bot***/")
-    .replace(CURSOR_API_KEY_RE, "crsr_***");
+    .replace(TELEGRAM_BOT_TOKEN_RE, "***BOT_TOKEN***")
+    .replace(CURSOR_API_KEY_RE, "***CURSOR_KEY***");
 }

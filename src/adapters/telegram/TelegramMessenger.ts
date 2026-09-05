@@ -14,6 +14,7 @@ import type {
 } from "../../core/messenger/types.js";
 import type { IMessenger, InteractiveMessage } from "../../core/messenger/IMessenger.js";
 import { logger } from "../../logger.js";
+import { sanitizeForOutput } from "../../util/sanitize.js";
 
 export interface TelegramMessengerConfig {
   botToken: string;
@@ -173,7 +174,8 @@ export class TelegramMessenger implements IMessenger {
     text: string,
     opts?: SendOptions,
   ): Promise<MessageHandle> {
-    const r = await this.requireBot().api.sendMessage(Number(chatId), text, {
+    const safe = sanitizeForOutput(text);
+    const r = await this.requireBot().api.sendMessage(Number(chatId), safe, {
       parse_mode: this.toParseMode(opts?.parseMode ?? this.cfg.parseMode),
       reply_parameters: opts?.replyToMessageId
         ? { message_id: Number(opts.replyToMessageId) }
@@ -188,18 +190,24 @@ export class TelegramMessenger implements IMessenger {
   ): Promise<MessageHandle> {
     const keyboard = new InlineKeyboard();
     for (const btn of msg.buttons) {
-      keyboard.text(btn.label, btn.id);
+      keyboard.text(sanitizeForOutput(btn.label), btn.id);
       keyboard.row();
     }
-    const r = await this.requireBot().api.sendMessage(Number(chatId), msg.text, {
-      parse_mode: this.toParseMode(msg.parseMode ?? this.cfg.parseMode),
-      reply_markup: keyboard,
-    });
+    const r = await this.requireBot().api.sendMessage(
+      Number(chatId),
+      sanitizeForOutput(msg.text),
+      {
+        parse_mode: this.toParseMode(msg.parseMode ?? this.cfg.parseMode),
+        reply_markup: keyboard,
+      },
+    );
     return { messageId: String(r.message_id) };
   }
 
   async answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
-    await this.requireBot().api.answerCallbackQuery(callbackQueryId, { text });
+    await this.requireBot().api.answerCallbackQuery(callbackQueryId, {
+      text: text === undefined ? undefined : sanitizeForOutput(text),
+    });
   }
 
   async editText(
@@ -212,7 +220,7 @@ export class TelegramMessenger implements IMessenger {
       await this.requireBot().api.editMessageText(
         Number(chatId),
         Number(messageId),
-        text,
+        sanitizeForOutput(text),
         {
           parse_mode: this.toParseMode(opts?.parseMode ?? this.cfg.parseMode),
         },
@@ -232,7 +240,10 @@ export class TelegramMessenger implements IMessenger {
     const r = await this.requireBot().api.sendPhoto(
       Number(chatId),
       new InputFile(image.data, image.filename),
-      { caption, parse_mode: this.toParseMode(this.cfg.parseMode) },
+      {
+        caption: caption === undefined ? undefined : sanitizeForOutput(caption),
+        parse_mode: this.toParseMode(this.cfg.parseMode),
+      },
     );
     return { messageId: String(r.message_id) };
   }
@@ -245,7 +256,10 @@ export class TelegramMessenger implements IMessenger {
     const r = await this.requireBot().api.sendDocument(
       Number(chatId),
       new InputFile(file.data, file.filename),
-      { caption, parse_mode: this.toParseMode(this.cfg.parseMode) },
+      {
+        caption: caption === undefined ? undefined : sanitizeForOutput(caption),
+        parse_mode: this.toParseMode(this.cfg.parseMode),
+      },
     );
     return { messageId: String(r.message_id) };
   }

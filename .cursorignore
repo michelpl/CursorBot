@@ -1,0 +1,11 @@
+# Keep Cursor agents / indexing away from local secrets.
+# (git already ignores these; this covers the in-IDE + ACP agent surface.)
+
+.cursor-supervisor/
+.cursorbot/
+config.json
+.env
+.env.*
+data/
+*.log
+logs/

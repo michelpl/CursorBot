@@ -36,4 +36,6 @@ logs/
 extension/*.vsix
 extension/dist/
 extension/server/
-.
+
+# Local tooling / XDG-style config (never commit keys)
+.config/

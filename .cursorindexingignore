@@ -1,0 +1,9 @@
+# Same as .cursorignore — block secret paths from codebase indexing.
+.cursor-supervisor/
+.cursorbot/
+config.json
+.env
+.env.*
+data/
+*.log
+logs/

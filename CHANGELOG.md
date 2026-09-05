@@ -12,11 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commands **Set Telegram Bot Token** and **Set Cursor API Key** (masked inputs) write secrets to `.cursor-supervisor/config.json`, with links from the Settings descriptions.
 - Primary Side Bar activity icon and **Configuration** webview (enable switch, masked API keys, Start/Stop).
 - Extension setup wizard writes `config.json` under `.cursor-supervisor/` (legacy workspace-root `config.json` is still detected).
+- `.cursorignore` / `.cursorindexingignore` exclude secret paths from Cursor agents and indexing.
 
 ### Changed
 - Renamed the product from cursorbot / CursorBot to **Cursor Supervisor** (CLI `cursor-supervisor`, extension `michelpl.cursor-supervisor`).
 - User-facing strings (Telegram, CLI, IDE) are English.
 - Cursor IDE extension bundles the Telegram ACP service for Open VSX / Cursor marketplace packaging.
+- `sanitizeForOutput` also redacts bare BotFather tokens and `key_` Cursor API keys (not only URL-embedded tokens / `crsr_` keys).
+- ACP child env strips `TELEGRAM_BOT_TOKEN` (and lookalike values) so the agent cannot read the bot token from the environment.
+- All outbound Telegram messenger text (messages, edits, captions, callback answers) is sanitized before send.
 
 ### Fixed
 - Marketplace VSIX CLI now inlines Node dependencies, so status/start no longer fail with `ERR_MODULE_NOT_FOUND` (`commander` missing from the install folder).
